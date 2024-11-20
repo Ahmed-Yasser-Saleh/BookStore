@@ -1,13 +1,16 @@
 ﻿using Bookstore.DTO;
 using Bookstore.Model;
 using Bookstore.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Bookstore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    //[Authorize(Roles = "Customer")]
     public class BookController : ControllerBase
     {
         UnitOfwork db;
@@ -53,14 +56,28 @@ namespace Bookstore.Controllers
             return Ok(bk);
         }
         [HttpPost]
+        [SwaggerResponse(201, "Book created",typeof(Book))]
+        [SwaggerResponse(400, "Catalog or author not found or not valid data")]
+        [Consumes("application/json")]
+        [SwaggerOperation(
+            Summary = "Create book",
+            Description = "Create book on bookstore",
+            Tags = new[] {"Admin Operations"}
+            )
+            ]
         public IActionResult Add(AddBookDTO bk)
         {
             if (bk == null)
                 return BadRequest();
-            var CategoryExists = db.catalogrepository.CheckId(bk.CatalogId);
-            if (!CategoryExists)
+            var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
+            if (!CatalogExists)
             {
-                return BadRequest("Category not fodbd.");
+                return BadRequest("Catalog not Found.");
+            }
+            var AuthorExists = db.catalogrepository.CheckId(bk.CatalogId);
+            if (!AuthorExists)
+            {
+                return BadRequest("Author not Found.");
             }
             if (ModelState.IsValid)
             {
@@ -81,17 +98,40 @@ namespace Bookstore.Controllers
                 return BadRequest(ModelState);
         }
         [HttpPut("{id}")]
-        public IActionResult Edit(int id, Book bk)
+        [SwaggerOperation(Summary = "Update book", Tags = new[] { "Admin Operations" })]
+        public IActionResult Edit(AddBookDTO bk)
         {
             if (bk == null)
-                return NotFound();
-            if (id != bk.Id)
                 return BadRequest();
-            db.bookrepository.Edit(bk);
-            db.Save();
-            return Ok();
+            var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
+            if (!CatalogExists)
+            {
+                return BadRequest("Catalog not Found.");
+            }
+            var AuthorExists = db.catalogrepository.CheckId(bk.CatalogId);
+            if (!AuthorExists)
+            {
+                return BadRequest("Author not Found.");
+            }
+            if (ModelState.IsValid)
+            {
+                var pd = new Book()
+                {
+                    Title = bk.Title,
+                    Price = bk.Price,
+                    AuthorId = bk.AuthorId,
+                    CatalogId = bk.CatalogId,
+                    Stock = bk.Stock,
+                    PublishDate = bk.PublishDate
+                };
+                db.bookrepository.Edit(pd);
+                db.Save();
+                return Ok();
+            }
+            else return BadRequest(ModelState);
         }
         [HttpDelete("{id}")]
+        [SwaggerOperation(Summary = "Delete book", Tags = new[] { "Admin Operations" })]
         public IActionResult Delete(int id)
         {
             var book = db.bookrepository.GetById(id);

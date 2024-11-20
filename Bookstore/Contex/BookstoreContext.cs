@@ -1,6 +1,8 @@
 ﻿using Bookstore.Model;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 
 namespace Bookstore.Contex
 {
@@ -25,6 +27,10 @@ namespace Bookstore.Contex
         {
             base.OnModelCreating(builder);
             builder.Entity<OrderDetails>().HasKey(od => new { od.OrderId, od.BookId });
+            builder.Entity<IdentityRole>().HasData(
+                new IdentityRole("Admin"),
+                new IdentityRole("Customer")
+                );
         }
     }
 }
