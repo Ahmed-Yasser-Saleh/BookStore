@@ -1,4 +1,5 @@
 ﻿using Bookstore.DTO;
+using Bookstore.DTO.Customer;
 using Bookstore.Model;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Http;
@@ -19,11 +20,11 @@ namespace Bookstore.Controllers
     {
         UserManager<IdentityUser> userManager;
         SignInManager<IdentityUser> signmanager;
-        UnitOfwork db;
+       // UnitOfwork db;
 
         public CustomerController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
         {
-            this.db = db;
+            //this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
@@ -68,20 +69,23 @@ namespace Bookstore.Controllers
                 var rs = signmanager.PasswordSignInAsync(cs.username, cs.password, false, false).Result;
                 if (rs.Succeeded)
                 {
+                    var user = userManager.FindByNameAsync(cs.username).Result;
                     #region generate token
-                    string key = "My Complex Secret Key";
-                    var x = new List<Claim> {
-                    new Claim(ClaimTypes.Name, cs.username)
-                    };
-                    var sercretkey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-                    var signture = new SigningCredentials(sercretkey, SecurityAlgorithms.Aes128CbcHmacSha256);
+
+                    List < Claim > userdata = new List<Claim>();
+                    userdata.Add(new Claim(ClaimTypes.Name, user.UserName));
+                    string key = "My Complex Secret Key My Complex Secret Key My Complex Secret Key";
+                    var secertkey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key));
+   
+                    var signingcer = new SigningCredentials(secertkey, SecurityAlgorithms.HmacSha256);
+
                     var token = new JwtSecurityToken(
-                        claims: x,
-                        signingCredentials: signture
-                        );
+                    claims: userdata,
+                    signingCredentials: signingcer
+                    );
                     var tokenstring = new JwtSecurityTokenHandler().WriteToken(token);
-                    #endregion
                     return Ok(tokenstring);
+                    #endregion
                 }
                 else
                     return Unauthorized();
@@ -99,7 +103,8 @@ namespace Bookstore.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            var Customers = db.customerrepository.Selectall();
+           // var Customers = db.customerrepository.Selectall();
+           var Customers = userManager.GetUsersInRoleAsync("Customer").Result.OfType<Customer>().ToList();  
             List<CustomerDTO>  Customersdto = new List<CustomerDTO>();
             foreach (var customer in Customers)
             {
@@ -114,6 +119,46 @@ namespace Bookstore.Controllers
             if (Customersdto.Count == 0)
                 return NotFound();
             return Ok(Customersdto);
+        }
+        [HttpGet("{id}")]
+        public IActionResult GetbyId(string id)
+        {
+            var cs = (Customer)userManager.GetUsersInRoleAsync("Customer").Result.Where(c => c.Id == id).SingleOrDefault();
+            if (cs == null) return NotFound();
+            var CS = new CustomerDTO()
+            {
+                fullname = cs.fullname,
+                username = cs.UserName,
+                email = cs.Email,
+                address = cs.address,
+                phonenumber = cs.PhoneNumber
+            };
+            return Ok(CS);
+        }
+        [HttpPut]
+        public IActionResult Edit(Edit CustomerEditDTO)
+        {
+            if (ModelState.IsValid)
+            {
+                var cs = (Customer)userManager.FindByIdAsync(CustomerEditDTO.Id).Result;
+                if (cs == null) return NotFound();
+                cs.Id = CustomerEditDTO.Id;
+                cs.PhoneNumber = CustomerEditDTO.phonenumber;
+                cs.address = CustomerEditDTO.address;
+                cs.Email = CustomerEditDTO.email;
+                cs.fullname = CustomerEditDTO.fullname;
+                cs.UserName = CustomerEditDTO.username;
+                var res = userManager.UpdateAsync(cs).Result;
+                if (res.Succeeded)
+                    return Ok();
+                else
+                    return BadRequest();
+                //db.customerrepository.Edit(cs);
+                //db.Save();
+                //return Ok();
+            }
+            else
+                return BadRequest(ModelState);
         }
     }
 }

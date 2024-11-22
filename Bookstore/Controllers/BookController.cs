@@ -10,7 +10,7 @@ namespace Bookstore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer")]
     public class BookController : ControllerBase
     {
         UnitOfwork db;

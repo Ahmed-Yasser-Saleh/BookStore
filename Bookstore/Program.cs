@@ -48,16 +48,27 @@ namespace Bookstore
             builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<BookstoreContext>();
 
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+
+            builder.Services.AddAuthentication(option =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
+                option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                option.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(
+            // validate token
+            op =>
+            {
+                op.SaveToken = true;
+                #region secret key
+                string key = "My Complex Secret Key My Complex Secret Key My Complex Secret Key";
+                var secretKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key));
+                #endregion
+                op.TokenValidationParameters = new TokenValidationParameters()
                 {
-                    ValidateLifetime = true,
-                    ValidateAudience = false,
+                    IssuerSigningKey = secretKey,
                     ValidateIssuer = false,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("My Complex Secret Key"))
+                    ValidateAudience = false
                 };
             });
             builder.Services.Configure<IdentityOptions>(options =>
@@ -70,9 +81,6 @@ namespace Bookstore
                 options.Password.RequireLowercase = false; // not Must contain at least one lowercase letter
             });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -84,7 +92,7 @@ namespace Bookstore
 
             app.UseHttpsRedirection();
 
-            app.UseAuthentication();
+           // app.UseAuthentication();
 
             app.UseAuthorization();
 
