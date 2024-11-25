@@ -10,7 +10,6 @@ namespace Bookstore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    [Authorize(Roles = "Customer")]
     public class BookController : ControllerBase
     {
         UnitOfwork db;
@@ -19,6 +18,7 @@ namespace Bookstore.Controllers
             this.db = db;
         }
         [HttpGet]
+        [Authorize(Roles = "Customer,Admin")]
         public IActionResult GetAll()
         {
             var books = db.bookrepository.Selectall();
@@ -40,6 +40,7 @@ namespace Bookstore.Controllers
             return Ok(booksdto);
         }
         [HttpGet("{id}")]
+        [Authorize(Roles = "Customer,Admin")]
         public IActionResult Getbyid(int id) {
         var book = db.bookrepository.GetById(id);
         if(book == null) return NotFound();
@@ -56,6 +57,7 @@ namespace Bookstore.Controllers
             return Ok(bk);
         }
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [SwaggerResponse(201, "Book created",typeof(Book))]
         [SwaggerResponse(400, "Catalog or author not found or not valid data")]
         [Consumes("application/json")]
@@ -98,6 +100,7 @@ namespace Bookstore.Controllers
                 return BadRequest(ModelState);
         }
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update book", Tags = new[] { "Admin Operations" })]
         public IActionResult Edit(AddBookDTO bk)
         {
@@ -131,6 +134,7 @@ namespace Bookstore.Controllers
             else return BadRequest(ModelState);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete book", Tags = new[] { "Admin Operations" })]
         public IActionResult Delete(int id)
         {

@@ -2,7 +2,7 @@
 
 namespace Bookstore.DTO
 {
-    public class LoginCustomerDTO
+    public class LoginDTO
     {
         [RegularExpression("[A-Za-z]+", ErrorMessage = "Username does not cantain any number")]
         [Required]

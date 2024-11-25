@@ -22,7 +22,7 @@ namespace Bookstore.Controllers
         SignInManager<IdentityUser> signmanager;
        // UnitOfwork db;
 
-        public CustomerController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
+        public CustomerController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
         {
             //this.db = db;
             this.userManager = userManager;
@@ -62,37 +62,7 @@ namespace Bookstore.Controllers
                 return BadRequest(ModelState);
             }
         }
-        [HttpPost("Login")]
-        public IActionResult Login(LoginCustomerDTO cs) {
-            if (ModelState.IsValid)
-            {
-                var rs = signmanager.PasswordSignInAsync(cs.username, cs.password, false, false).Result;
-                if (rs.Succeeded)
-                {
-                    var user = userManager.FindByNameAsync(cs.username).Result;
-                    #region generate token
-
-                    List < Claim > userdata = new List<Claim>();
-                    userdata.Add(new Claim(ClaimTypes.Name, user.UserName));
-                    string key = "My Complex Secret Key My Complex Secret Key My Complex Secret Key";
-                    var secertkey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key));
-   
-                    var signingcer = new SigningCredentials(secertkey, SecurityAlgorithms.HmacSha256);
-
-                    var token = new JwtSecurityToken(
-                    claims: userdata,
-                    signingCredentials: signingcer
-                    );
-                    var tokenstring = new JwtSecurityTokenHandler().WriteToken(token);
-                    return Ok(tokenstring);
-                    #endregion
-                }
-                else
-                    return Unauthorized();
-            }
-            else
-                return BadRequest(ModelState);
-        }
+      
         [HttpPost("Logout")]
         public IActionResult Logout()
         {

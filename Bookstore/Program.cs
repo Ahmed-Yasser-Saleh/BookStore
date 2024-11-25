@@ -68,7 +68,8 @@ namespace Bookstore
                 {
                     IssuerSigningKey = secretKey,
                     ValidateIssuer = false,
-                    ValidateAudience = false
+                    ValidateAudience = false,
+                    ValidateLifetime = true
                 };
             });
             builder.Services.Configure<IdentityOptions>(options =>
@@ -91,8 +92,6 @@ namespace Bookstore
             }
 
             app.UseHttpsRedirection();
-
-           // app.UseAuthentication();
 
             app.UseAuthorization();
 
