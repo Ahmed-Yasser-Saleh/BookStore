@@ -1,4 +1,5 @@
 ﻿using Bookstore.DTO;
+using Bookstore.DTO.Book;
 using Bookstore.Model;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,7 @@ namespace Bookstore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "Books")]
     public class BookController : ControllerBase
     {
         UnitOfwork db;
@@ -102,9 +104,11 @@ namespace Bookstore.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update book", Tags = new[] { "Admin Operations" })]
-        public IActionResult Edit(AddBookDTO bk)
+        public IActionResult Edit(int id, EditBookDTO bk)
         {
             if (bk == null)
+                return BadRequest();
+            if(bk.Id != id)
                 return BadRequest();
             var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!CatalogExists)
@@ -120,6 +124,7 @@ namespace Bookstore.Controllers
             {
                 var pd = new Book()
                 {
+                    Id = id,
                     Title = bk.Title,
                     Price = bk.Price,
                     AuthorId = bk.AuthorId,

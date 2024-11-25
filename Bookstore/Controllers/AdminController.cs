@@ -4,11 +4,13 @@ using Bookstore.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace Bookstore.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "Admins")]
     public class AdminController : ControllerBase
     {
         UserManager<IdentityUser> userManager;
@@ -20,6 +22,7 @@ namespace Bookstore.Controllers
             this.signmanager = signmanager;
         }
         [HttpPost("Register")]
+        [SwaggerOperation(Summary = "Register Admin", Tags = new[] { "Admin Operations" })]
         public async Task<IActionResult> Register(AdminDTO cs) //username: ahmedyasser pw: 12345
         {
             if (ModelState.IsValid)

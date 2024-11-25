@@ -16,6 +16,7 @@ namespace Bookstore.Controllers
 {
     [Route("[controller]")]
     [ApiController]
+    [ApiExplorerSettings(GroupName = "Customers")]
     public class CustomerController : ControllerBase
     {
         UserManager<IdentityUser> userManager;
@@ -61,14 +62,6 @@ namespace Bookstore.Controllers
             {
                 return BadRequest(ModelState);
             }
-        }
-      
-        [HttpPost("Logout")]
-        public IActionResult Logout()
-        {
-            signmanager.SignOutAsync();
-            //token will be not valid 
-            return Ok();
         }
         [HttpGet]
         public IActionResult Get()

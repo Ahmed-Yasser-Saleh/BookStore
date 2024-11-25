@@ -1,4 +1,3 @@
-
 using Bookstore.Contex;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,6 +8,8 @@ using Microsoft.OpenApi.Models;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 using System;
+using Microsoft.Extensions.Options;
+using System.Reflection;
 
 namespace Bookstore
 {
@@ -25,23 +26,31 @@ namespace Bookstore
             builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Book")));
 
             builder.Services.AddScoped<UnitOfwork>();
-
+            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(conf =>
             {
-                conf.SwaggerDoc("v1",
-                    new OpenApiInfo {
-                    Title = "Hello to BookStore Api - v1",
-                    Version = "v1",
-                    Description = "BookStore",
-                    TermsOfService = new Uri("https://www.google.com/search?q=book+store&oq=book+store&gs_lcrp=EgZjaHJvbWUqCggAEAAYsQMYgAQyCggAEAAYsQMYgAQyCQgBEAAYChiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIHCAcQABiABDIHCAgQABiABDIHCAkQABiABNIBCTI4NDdqMGoxNagCCLACAQ&sourceid=chrome&ie=UTF-8"),
-                    Contact = new OpenApiContact {
-                    Name = "Ahmed Yasser",
-                    Email ="ahmedyasserr552@gmail.com"
-                    }
-                    
-                    }
-                    );
+                conf.SwaggerDoc("All", new OpenApiInfo { Title = "All APIs", Version = "v1" });
+                conf.SwaggerDoc("Admins", new OpenApiInfo { Title = "Admin APIs", Version = "v1" });
+                conf.SwaggerDoc("Customers", new OpenApiInfo { Title = "Customer APIs", Version = "v1" });
+                conf.SwaggerDoc("Books", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Books APIs", Version = "v1" });
+                conf.SwaggerDoc("Authors", new OpenApiInfo { Title = "Authors APIs", Version = "v1" });
+                conf.SwaggerDoc("Orders", new OpenApiInfo { Title = "Orders APIs", Version = "v1" });
+                conf.SwaggerDoc("Loginout", new OpenApiInfo { Title = "Loginout APIs", Version = "v1" });
+                conf.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    var groupName = apiDesc.GroupName;
+                    if (docName == "All")
+                        return true;
+                    return docName == groupName;
+                });
+                // Include XML comments for API documentation
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    conf.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+                }
                 conf.EnableAnnotations();
             });
 
@@ -88,7 +97,20 @@ namespace Bookstore
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                // app.UseSwaggerUI();
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/All/swagger.json", "All");
+                    options.SwaggerEndpoint("/swagger/Admins/swagger.json", "Admins");
+                    options.SwaggerEndpoint("/swagger/Customers/swagger.json", "Customers");
+                    options.SwaggerEndpoint("/swagger/Books/swagger.json", "Books");
+                    options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");
+                    options.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders");
+                    options.SwaggerEndpoint("/swagger/Loginout/swagger.json", "Loginout");
+                    options.RoutePrefix = "swagger";
+                    options.DisplayRequestDuration();
+                    options.DefaultModelsExpandDepth(-1);
+                });
             }
 
             app.UseHttpsRedirection();

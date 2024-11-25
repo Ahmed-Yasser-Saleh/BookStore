@@ -12,6 +12,7 @@ namespace Bookstore.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+   [ApiExplorerSettings(GroupName = "Loginout")]
     public class LoginoutController : ControllerBase
     {
         UserManager<IdentityUser> userManager;
