@@ -1,4 +1,6 @@
 ﻿using Bookstore.DTO;
+using Bookstore.DTO.Account;
+using Bookstore.Model;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -12,16 +14,16 @@ namespace Bookstore.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-   [ApiExplorerSettings(GroupName = "Loginout")]
-    public class LoginoutController : ControllerBase
+   [ApiExplorerSettings(GroupName = "Account")]
+    public class AccountController : ControllerBase
     {
         UserManager<IdentityUser> userManager;
         SignInManager<IdentityUser> signmanager;
-        // UnitOfwork db;
+        //UnitOfwork db;
 
-        public LoginoutController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
+        public AccountController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
         {
-            //this.db = db;
+          //  this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
@@ -63,6 +65,24 @@ namespace Bookstore.Controllers
             }
             else
                 return BadRequest(ModelState);
+        }
+        [HttpPost("ChangePassword")]
+        public IActionResult ChangePassword(ChangePasswordDTO passwordDTO)
+        {
+            var user = userManager.FindByNameAsync(passwordDTO.username).Result;
+            if(user == null) {
+                return BadRequest("user not exist");
+            }
+            if(passwordDTO.newpassword != passwordDTO.confirmpassword) {
+                return BadRequest("Please, Enter the confirm password with your new password to confirm");
+            }
+            var result = userManager.ChangePasswordAsync(user, passwordDTO.oldpassword, passwordDTO.newpassword).Result;
+            if (result.Succeeded)
+            {
+                return Ok("Password changed");
+            }
+            else
+               return BadRequest("old password is not correct");
         }
         [HttpPost("Logout")]
         public IActionResult Logout()

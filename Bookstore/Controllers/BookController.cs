@@ -21,6 +21,8 @@ namespace Bookstore.Controllers
         }
         [HttpGet]
         [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "select all books ")]
+        [SwaggerResponse(200, "return all books", typeof(List<BookDTO>))]
         public IActionResult GetAll()
         {
             var books = db.bookrepository.Selectall();
@@ -43,6 +45,9 @@ namespace Bookstore.Controllers
         }
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "can earch on book by book id ")]
+        [SwaggerResponse(200, "return book data", typeof(BookDTO))]
+        [SwaggerResponse(404, "if no book founded")]
         public IActionResult Getbyid(int id) {
         var book = db.bookrepository.GetById(id);
         if(book == null) return NotFound();
@@ -104,6 +109,8 @@ namespace Bookstore.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update book", Tags = new[] { "Admin Operations" })]
+        [SwaggerResponse(204, "if book updated succcesfully")]
+        [SwaggerResponse(400, "ifinvalid book data")]
         public IActionResult Edit(int id, EditBookDTO bk)
         {
             if (bk == null)
@@ -141,6 +148,7 @@ namespace Bookstore.Controllers
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete book", Tags = new[] { "Admin Operations" })]
+        [SwaggerResponse(200, "if book deleted succcesfully")]
         public IActionResult Delete(int id)
         {
             var book = db.bookrepository.GetById(id);

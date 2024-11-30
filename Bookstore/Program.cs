@@ -36,7 +36,7 @@ namespace Bookstore
                 conf.SwaggerDoc("Books", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Books APIs", Version = "v1" });
                 conf.SwaggerDoc("Authors", new OpenApiInfo { Title = "Authors APIs", Version = "v1" });
                 conf.SwaggerDoc("Orders", new OpenApiInfo { Title = "Orders APIs", Version = "v1" });
-                conf.SwaggerDoc("Loginout", new OpenApiInfo { Title = "Loginout APIs", Version = "v1" });
+                conf.SwaggerDoc("Account", new OpenApiInfo { Title = "Account APIs", Version = "v1" });
                 conf.DocInclusionPredicate((docName, apiDesc) =>
                 {
                     var groupName = apiDesc.GroupName;
@@ -106,7 +106,7 @@ namespace Bookstore
                     options.SwaggerEndpoint("/swagger/Books/swagger.json", "Books");
                     options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");
                     options.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders");
-                    options.SwaggerEndpoint("/swagger/Loginout/swagger.json", "Loginout");
+                    options.SwaggerEndpoint("/swagger/Account/swagger.json", "Account");
                     options.RoutePrefix = "swagger";
                     options.DisplayRequestDuration();
                     options.DefaultModelsExpandDepth(-1);

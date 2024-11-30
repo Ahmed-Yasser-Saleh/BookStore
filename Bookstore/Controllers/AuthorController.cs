@@ -25,6 +25,9 @@ namespace Bookstore.Controllers
         }
         [HttpGet]
         [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "Retrieves a list of all authors.")]
+        [SwaggerResponse(200, "Returns a list of authors.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(404, "No authors found.")]
         public IActionResult GetAll()
         {
             var Authors = db.authorrepository.Selectall();
@@ -40,6 +43,9 @@ namespace Bookstore.Controllers
         }
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "Retrieves an author by their ID.")]
+        [SwaggerResponse(200, "Returns the author details.", typeof(AuthorDTO))]
+        [SwaggerResponse(404, "Author not found.")]
         public IActionResult Getbyid(int id)
         {
             var Author = db.authorrepository.GetById(id);
@@ -54,6 +60,8 @@ namespace Bookstore.Controllers
             Tags = new[] { "Admin Operations" }
             )
             ]
+        [SwaggerResponse(201, "Author was created successfully.")]
+        [SwaggerResponse(400, "Invalid input data.")]
         public IActionResult Add(AddAuthorDTO ath)
         {
             if (ath == null)
@@ -71,6 +79,9 @@ namespace Bookstore.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update Author", Tags = new[] { "Admin Operations" })]
+        [SwaggerResponse(200, "The author was updated successfully.")]
+        [SwaggerResponse(400, "Invalid input or mismatch between ID and author data.")]
+        [SwaggerResponse(404, "Author not found.")]
         public IActionResult Edit(int id, EditAuthorDTO ath)
         {
             if (ath == null)
@@ -89,6 +100,8 @@ namespace Bookstore.Controllers
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete Author", Tags = new[] { "Admin Operations" })]
+        [SwaggerResponse(200, "Author was deleted successfully.")]
+        [SwaggerResponse(404, "Author not found.")]
         public IActionResult Delete(int id)
         {
             var author = db.authorrepository.GetById(id);

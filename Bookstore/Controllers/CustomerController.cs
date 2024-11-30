@@ -21,15 +21,16 @@ namespace Bookstore.Controllers
     {
         UserManager<IdentityUser> userManager;
         SignInManager<IdentityUser> signmanager;
-       // UnitOfwork db;
 
         public CustomerController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
         {
-            //this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
         [HttpPost("Register")]
+        [SwaggerOperation(Summary = "Registers a new customer.")]
+        [SwaggerResponse(200, "The customer has been successfully registered.")]
+        [SwaggerResponse(400, "The registration failed due to validation errors or other issues.")]
         public IActionResult Register(CustomerDTO cs) //username: ahmedyasser pw: 12345
         {
             if (ModelState.IsValid)
@@ -58,12 +59,16 @@ namespace Bookstore.Controllers
                 {
                     return BadRequest("create not succeded");
                 }
-            } else
+            }
+            else
             {
                 return BadRequest(ModelState);
             }
         }
         [HttpGet]
+        [SwaggerOperation(Summary = "Retrieves all customers in the 'Customer' role.")]
+        [SwaggerResponse(200, "Returns a list of customers.", typeof(List<CustomerDTO>))]
+        [SwaggerResponse(404, "No customers were found.")]
         public IActionResult Get()
         {
            // var Customers = db.customerrepository.Selectall();
@@ -84,6 +89,9 @@ namespace Bookstore.Controllers
             return Ok(Customersdto);
         }
         [HttpGet("{id}")]
+        [SwaggerOperation(Summary = "Retrieves a customer by their ID.")]
+        [SwaggerResponse(200, "Returns the customer details.", typeof(CustomerDTO))]
+        [SwaggerResponse(404, "No customer was found with the given ID.")]
         public IActionResult GetbyId(string id)
         {
             var cs = (Customer)userManager.GetUsersInRoleAsync("Customer").Result.Where(c => c.Id == id).SingleOrDefault();
@@ -99,6 +107,10 @@ namespace Bookstore.Controllers
             return Ok(CS);
         }
         [HttpPut]
+        [SwaggerOperation(Summary = "Updates an existing customer's details.")]
+        [SwaggerResponse(200, "The customer details have been successfully updated.")]
+        [SwaggerResponse(404, "No customer was found with the given ID.")]
+        [SwaggerResponse(400, "The update failed due to validation errors or other issues.")]
         public IActionResult Edit(Edit CustomerEditDTO)
         {
             if (ModelState.IsValid)

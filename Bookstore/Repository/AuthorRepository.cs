@@ -14,5 +14,6 @@ namespace Bookstore.Repository
             var x = db.Authors.Any(c => c.Id == id);
             return x;
         }
+
     }
 }
