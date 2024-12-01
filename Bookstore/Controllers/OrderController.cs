@@ -43,32 +43,38 @@ namespace Bookstore.Controllers
                 OrderDate = DateTime.Now,
                 Status = "Created",
             };
-            db.orderrepository.Add(neworder);
-            db.Save();
+            //db.orderrepository.Add(neworder);
+            //db.Save();
             decimal totalprice = 0;
             foreach (var order in orderDTO.orderDetails)
             {
                 var book = db.bookrepository.GetById(order.BookId);
                 if (book == null)
+                {
                     return BadRequest($"book with id: {order.BookId} not exist");
+                }
+                if (neworder.orderDetails.Any(x => x.BookId == book.Id))
+                    return BadRequest("book id has choossed");
+
                 if (book.Stock < order.quantity)
                 {
                     return BadRequest($"No enugh books for {book.Title} in stock");
                 }
-               var orderdetails = new OrderDetails
-               {
-                   OrderId = neworder.Id,
-                   BookId = order.BookId,
-                   Quantity = order.quantity,
-                   UnitPrice = book.Price
-               };
-               book.Stock -= order.quantity;
-               totalprice += order.quantity * book.Price;
-               db.bookrepository.Edit(book);
-               db.orderDetailsrepository.Add(orderdetails);
+                var orderdetails = new OrderDetails
+                {
+                    OrderId = neworder.Id,
+                    BookId = order.BookId,
+                    Quantity = order.quantity,
+                    UnitPrice = book.Price
+                };
+                neworder.orderDetails.Add(orderdetails); //save it in table direct instead of repo and need to db.save()
+                book.Stock -= order.quantity;
+                totalprice += order.quantity * book.Price;
+                db.bookrepository.Edit(book);
+                db.orderDetailsrepository.Add(orderdetails);
             }
             neworder.TotalPrice = totalprice;
-            db.orderrepository.Edit(neworder);
+            db.Genericorderrepository.Edit(neworder);
             db.Save();
             return Created();
         }
@@ -78,17 +84,25 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "The order was not found.")]
         public async Task<IActionResult> Get(int id)
         {
-            var order = db.orderrepository.GetById(id);
+            var order = db.Genericorderrepository.GetById(id);
             if (order == null) return NotFound("order not found");
+            var cs = (Customer)userManager.FindByIdAsync(order.CustomerId).Result;
             var ord = new GetorderDTO {
-                CustomerId = order.CustomerId,
+                CustomerName = cs.fullname,
                 orderDetails = order.orderDetails.Select(x => new OrderdetailsDTO
                 {
                     BookId = x.BookId,
-                    quantity = x.Quantity
+                    quantity = x.Quantity,
+                    Unitprice = x.UnitPrice
                 }).ToList(),
                 Status = order.Status
             };
+            decimal Totalprice = 0;
+            foreach (var item in ord.orderDetails)
+            {
+                Totalprice += item.Unitprice * item.quantity;
+            }
+            ord.totalprice = Totalprice;
             return Ok(ord);
         }
         [HttpPut("{id}")]
@@ -98,10 +112,55 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "The order was not found.")]
         public async Task<IActionResult> updatestatus(int id, string status)
         {
-            var order = db.orderrepository.GetById(id);
+            var order = db.Genericorderrepository.GetById(id);
             if (order == null) return NotFound("order not found");
             order.Status = status;
-            db.orderrepository.Edit(order);
+            db.Genericorderrepository.Edit(order);
+            db.Save();
+            return Ok();
+        }
+        [HttpGet("Customer/{id}")]
+        public IActionResult GetforCustomer(string id)
+        {
+            var orders = db.Orderepository.GetByCustomerID(id);
+            if (orders == null) return NotFound();
+            var cs = (Customer)userManager.FindByIdAsync(id).Result;
+            var ordersDTO = new List<GetorderDTO>();
+            foreach (var order in orders)
+            {
+                var ord = new GetorderDTO
+                {
+                    CustomerName = cs.fullname,
+                    orderDetails = order.orderDetails.Select(x => new OrderdetailsDTO
+                    {
+                        BookId = x.BookId,
+                        quantity = x.Quantity,
+                        Unitprice = x.UnitPrice
+                    }).ToList(),
+                    Status = order.Status
+                };
+                decimal Totalprice = 0;
+                foreach (var item in ord.orderDetails)
+                {
+                    Totalprice += item.Unitprice * item.quantity;
+                }
+                ord.totalprice = Totalprice;
+                ordersDTO.Add(ord);
+            }
+            if(ordersDTO.Count == 0) return NotFound($"There are no orders for Customer: {cs.fullname}");
+            return Ok(ordersDTO);
+        }
+        [HttpDelete("Cancel/{id}")]
+        [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Delete an order.", Tags = new[] { "Admin Operations" })]
+        [SwaggerResponse(200, "The order status was deleted successfully.")]
+        [SwaggerResponse(404, "The order was not found.")]
+        public IActionResult Cancel(int id)
+        {
+            var order = db.Genericorderrepository.GetById(id);
+            if (order == null) return NotFound("order not found");
+            order.Status = "Cancel";
+            db.Genericorderrepository.Delete(order);
             db.Save();
             return Ok();
         }

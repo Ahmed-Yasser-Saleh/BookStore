@@ -10,7 +10,7 @@ namespace Bookstore.Model
         public DateTime OrderDate { get; set; }
         public decimal TotalPrice { get; set; }
         public string Status { get; set; }
-        public virtual Customer customer { get; set; } = new Customer();
+        public virtual Customer customer { get; set; }
         public virtual List<OrderDetails> orderDetails { get; set; } = new List<OrderDetails>();
     }
 }

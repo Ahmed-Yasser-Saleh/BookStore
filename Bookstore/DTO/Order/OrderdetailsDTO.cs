@@ -4,6 +4,7 @@
     {
         public int BookId { get; set; }
         public int quantity { get; set; }
+        public decimal Unitprice { get; set; }
  
     }
 }

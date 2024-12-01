@@ -13,6 +13,7 @@ namespace Bookstore.Repository
         GenericRepository<Customer> Customerrepository;
         CatalogRepository Catalogrepository;
         AuthorRepository AuthorRepository;
+        OrderRepository OrderRepository;
         public UnitOfwork(BookstoreContext db)
         {
             this.db = db;
@@ -46,7 +47,7 @@ namespace Bookstore.Repository
                 return Customerrepository;
             }
         }
-        public GenericRepository<Order> orderrepository
+        public GenericRepository<Order> Genericorderrepository
         {
             get
             {
@@ -55,6 +56,17 @@ namespace Bookstore.Repository
                     Orderrepository = new GenericRepository<Order>(db);
                 }
                 return Orderrepository;
+            }
+        }
+        public OrderRepository Orderepository
+        {
+            get
+            {
+                if (OrderRepository == null)
+                {
+                    OrderRepository = new OrderRepository(db);
+                }
+                return OrderRepository;
             }
         }
         public GenericRepository<OrderDetails> orderDetailsrepository
