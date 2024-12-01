@@ -120,6 +120,9 @@ namespace Bookstore.Controllers
             return Ok();
         }
         [HttpGet("Customer/{id}")]
+        [SwaggerOperation(Summary = "Get all orders for customer.")]
+        [SwaggerResponse(200, "return all orders for customer")]
+        [SwaggerResponse(404, "The order with customerid was not found.")]
         public IActionResult GetforCustomer(string id)
         {
             var orders = db.Orderepository.GetByCustomerID(id);
