@@ -51,6 +51,29 @@ namespace Bookstore
                 {
                     conf.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
                 }
+                //test with token in swagger
+                conf.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme (Example: 'Bearer 12345abcdef')",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = JwtBearerDefaults.AuthenticationScheme
+                });
+                conf.AddSecurityRequirement(new OpenApiSecurityRequirement
+                                         {
+                                            {
+                                                new OpenApiSecurityScheme
+                                                {
+                                                    Reference = new OpenApiReference
+                                                    {
+                                                        Type = ReferenceType.SecurityScheme,
+                                                        Id = JwtBearerDefaults.AuthenticationScheme
+                                                    }
+                                                },
+                                                Array.Empty<string>()
+                                            }
+                                        });
                 conf.EnableAnnotations();
             });
 
@@ -90,6 +113,17 @@ namespace Bookstore
                 options.Password.RequireUppercase = false; // not Must contain at least one uppercase letter
                 options.Password.RequireLowercase = false; // not Must contain at least one lowercase letter
             });
+            var stringpolicy = "ay7aga";
+            builder.Services.AddCors(op =>
+            {
+                op.AddPolicy(stringpolicy,
+                builder =>
+                {
+                    builder.AllowAnyOrigin();
+                    builder.AllowAnyMethod();
+                    builder.AllowAnyHeader();
+                });
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             var app = builder.Build();
 
@@ -117,7 +151,7 @@ namespace Bookstore
 
             app.UseAuthorization();
 
-            
+            app.UseCors(stringpolicy);
             app.MapControllers();
 
             app.Run();
