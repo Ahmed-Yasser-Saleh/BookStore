@@ -27,44 +27,7 @@ namespace Bookstore.Controllers
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
-        [HttpPost("Register")]
-        [SwaggerOperation(Summary = "Registers a new customer.")]
-        [SwaggerResponse(200, "The customer has been successfully registered.")]
-        [SwaggerResponse(400, "The registration failed due to validation errors or other issues.")]
-        public IActionResult Register(CustomerDTO cs) //username: ahmedyasser pw: 12345
-        {
-            if (ModelState.IsValid)
-            {
-                var cust = new Customer
-                {
-                    fullname = cs.fullname,
-                    Email = cs.email,
-                    address = cs.address,
-                    UserName = cs.username,
-                    PhoneNumber = cs.phonenumber
-                };
-                //var res = userManager.CreateAsync(cust).Result; //function direct hash the password and save it
-                var res = userManager.CreateAsync(cust, cs.password).Result;
-                if (res.Succeeded)
-                {
-                    var rs = userManager.AddToRoleAsync(cust, "Customer").Result;
-                    if (rs.Succeeded)
-                    {
-                        return Ok();
-                    }
-                    else
-                        return BadRequest("addtorole not succeded");
-                }
-                else
-                {
-                    return BadRequest("create not succeded");
-                }
-            }
-            else
-            {
-                return BadRequest(ModelState);
-            }
-        }
+
         [HttpGet]
         [SwaggerOperation(Summary = "Retrieves all customers in the 'Customer' role.")]
         [SwaggerResponse(200, "Returns a list of customers.", typeof(List<CustomerDTO>))]

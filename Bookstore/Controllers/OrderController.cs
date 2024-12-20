@@ -41,7 +41,7 @@ namespace Bookstore.Controllers
             {
                 CustomerId = user.Id,
                 OrderDate = DateTime.Now,
-                Status = "Created",
+                Status = Order_Status.CREATED
             };
             //db.orderrepository.Add(neworder);
             //db.Save();
@@ -86,6 +86,9 @@ namespace Bookstore.Controllers
         {
             var order = db.Genericorderrepository.GetById(id);
             if (order == null) return NotFound("order not found");
+            var stsvar = true;
+            if (order.Status == Order_Status.CANCELED)
+                stsvar = false;
             var cs = (Customer)userManager.FindByIdAsync(order.CustomerId).Result;
             var ord = new GetorderDTO {
                 CustomerName = cs.fullname,
@@ -95,7 +98,7 @@ namespace Bookstore.Controllers
                     quantity = x.Quantity,
                     Unitprice = x.UnitPrice
                 }).ToList(),
-                Status = order.Status
+                Status = stsvar ? "CREATED" : "CANCELED"
             };
             decimal Totalprice = 0;
             foreach (var item in ord.orderDetails)
@@ -114,7 +117,15 @@ namespace Bookstore.Controllers
         {
             var order = db.Genericorderrepository.GetById(id);
             if (order == null) return NotFound("order not found");
-            order.Status = status;
+
+            if(status == "CANCELED")
+                order.Status = Order_Status.CANCELED;
+            else if(status == "CREATED")
+                order.Status = Order_Status.CREATED;
+            else
+            {
+                return BadRequest("Please, Enter Valid Status");
+            }
             db.Genericorderrepository.Edit(order);
             db.Save();
             return Ok();
@@ -140,7 +151,7 @@ namespace Bookstore.Controllers
                         quantity = x.Quantity,
                         Unitprice = x.UnitPrice
                     }).ToList(),
-                    Status = order.Status
+                    Status = order.Status.ToString()
                 };
                 decimal Totalprice = 0;
                 foreach (var item in ord.orderDetails)
@@ -153,7 +164,7 @@ namespace Bookstore.Controllers
             if(ordersDTO.Count == 0) return NotFound($"There are no orders for Customer: {cs.fullname}");
             return Ok(ordersDTO);
         }
-        [HttpDelete("Cancel/{id}")]
+        [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete an order.", Tags = new[] { "Admin Operations" })]
         [SwaggerResponse(200, "The order status was deleted successfully.")]
@@ -162,7 +173,6 @@ namespace Bookstore.Controllers
         {
             var order = db.Genericorderrepository.GetById(id);
             if (order == null) return NotFound("order not found");
-            order.Status = "Cancel";
             db.Genericorderrepository.Delete(order);
             db.Save();
             return Ok();

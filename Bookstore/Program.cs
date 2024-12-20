@@ -31,7 +31,6 @@ namespace Bookstore
             builder.Services.AddSwaggerGen(conf =>
             {
                 conf.SwaggerDoc("All", new OpenApiInfo { Title = "All APIs", Version = "v1" });
-                conf.SwaggerDoc("Admins", new OpenApiInfo { Title = "Admin APIs", Version = "v1" });
                 conf.SwaggerDoc("Customers", new OpenApiInfo { Title = "Customer APIs", Version = "v1" });
                 conf.SwaggerDoc("Books", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Books APIs", Version = "v1" });
                 conf.SwaggerDoc("Authors", new OpenApiInfo { Title = "Authors APIs", Version = "v1" });
@@ -135,7 +134,6 @@ namespace Bookstore
                 app.UseSwaggerUI(options =>
                 {
                     options.SwaggerEndpoint("/swagger/All/swagger.json", "All");
-                    options.SwaggerEndpoint("/swagger/Admins/swagger.json", "Admins");
                     options.SwaggerEndpoint("/swagger/Customers/swagger.json", "Customers");
                     options.SwaggerEndpoint("/swagger/Books/swagger.json", "Books");
                     options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");

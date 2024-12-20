@@ -9,8 +9,14 @@ namespace Bookstore.Model
         public string CustomerId { get; set; }
         public DateTime OrderDate { get; set; }
         public decimal TotalPrice { get; set; }
-        public string Status { get; set; }
+        public Order_Status Status { get; set; }
         public virtual Customer customer { get; set; }
         public virtual List<OrderDetails> orderDetails { get; set; } = new List<OrderDetails>();
+    }
+    
+    public enum Order_Status
+    {
+        CREATED,
+        CANCELED
     }
 }

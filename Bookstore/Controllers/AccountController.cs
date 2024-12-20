@@ -1,11 +1,13 @@
 ﻿using Bookstore.DTO;
 using Bookstore.DTO.Account;
+using Bookstore.DTO.Register;
 using Bookstore.Model;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -26,6 +28,76 @@ namespace Bookstore.Controllers
           //  this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
+        }
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register(RegisterDTO Rg)
+        {
+            if (Rg == null || !ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (Rg.password != Rg.Confirmpassword)
+            {
+                return BadRequest("Password must match ConfirmPassword");
+            }
+
+            if (Rg.isAdmin)
+            {
+                var Adm = new Admin
+                {
+                    Email = Rg.email,
+                    UserName = Rg.username,
+                    PhoneNumber = Rg.phonenumber,
+                };
+
+                var res = await userManager.CreateAsync(Adm, Rg.password);
+                if (res.Succeeded)
+                {
+                    var rs = await userManager.AddToRoleAsync(Adm, "Admin");
+                    if (rs.Succeeded)
+                    {
+                        return Ok("Admin registered successfully.");
+                    }
+                    else
+                    {
+                        return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
+                    }
+                }
+                else
+                {
+                    return BadRequest("Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)));
+                }
+            }
+            else
+            {
+                var cust = new Customer
+                {
+                    fullname = Rg.fullname,
+                    Email = Rg.email,
+                    address = Rg.address,
+                    UserName = Rg.username,
+                    PhoneNumber = Rg.phonenumber
+                };
+
+                var res = await userManager.CreateAsync(cust, Rg.password);
+                if (res.Succeeded)
+                {
+                    var rs = await userManager.AddToRoleAsync(cust, "Customer");
+                    if (rs.Succeeded)
+                    {
+                        return Ok("Customer registered successfully.");
+                    }
+                    else
+                    {
+                        return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
+                    }
+                }
+                else
+                {
+                    return BadRequest("Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)));
+                }
+            }
         }
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDTO cs)
