@@ -23,7 +23,7 @@ namespace Bookstore
 
             builder.Services.AddControllers();
 
-            builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Book")));
+            builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Publish")));
 
             builder.Services.AddScoped<UnitOfwork>();
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
@@ -33,6 +33,7 @@ namespace Bookstore
                 conf.SwaggerDoc("All", new OpenApiInfo { Title = "All APIs", Version = "v1" });
                 conf.SwaggerDoc("Customers", new OpenApiInfo { Title = "Customer APIs", Version = "v1" });
                 conf.SwaggerDoc("Books", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Books APIs", Version = "v1" });
+                conf.SwaggerDoc("Catalogs", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Catalogs APIs", Version = "v1" });
                 conf.SwaggerDoc("Authors", new OpenApiInfo { Title = "Authors APIs", Version = "v1" });
                 conf.SwaggerDoc("Orders", new OpenApiInfo { Title = "Orders APIs", Version = "v1" });
                 conf.SwaggerDoc("Account", new OpenApiInfo { Title = "Account APIs", Version = "v1" });
@@ -129,21 +130,22 @@ namespace Bookstore
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                // app.UseSwaggerUI();
-                app.UseSwaggerUI(options =>
-                {
-                    options.SwaggerEndpoint("/swagger/All/swagger.json", "All");
-                    options.SwaggerEndpoint("/swagger/Customers/swagger.json", "Customers");
-                    options.SwaggerEndpoint("/swagger/Books/swagger.json", "Books");
-                    options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");
-                    options.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders");
-                    options.SwaggerEndpoint("/swagger/Account/swagger.json", "Account");
-                    options.RoutePrefix = "swagger";
-                    options.DisplayRequestDuration();
-                    options.DefaultModelsExpandDepth(-1);
-                });
             }
+            app.UseSwagger();
+            // app.UseSwaggerUI();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/All/swagger.json", "All");
+                options.SwaggerEndpoint("/swagger/Customers/swagger.json", "Customers");
+                options.SwaggerEndpoint("/swagger/Books/swagger.json", "Books");
+                options.SwaggerEndpoint("/swagger/Catalogs/swagger.json", "Catalogs");
+                options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");
+                options.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders");
+                options.SwaggerEndpoint("/swagger/Account/swagger.json", "Account");
+                options.RoutePrefix = "swagger";
+                options.DisplayRequestDuration();
+                options.DefaultModelsExpandDepth(-1);
+            });
 
             app.UseHttpsRedirection();
 

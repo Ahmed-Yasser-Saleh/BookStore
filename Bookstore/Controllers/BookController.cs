@@ -109,8 +109,8 @@ namespace Bookstore.Controllers
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update book", Tags = new[] { "Admin Operations" })]
-        [SwaggerResponse(204, "if book updated succcesfully")]
-        [SwaggerResponse(400, "ifinvalid book data")]
+        [SwaggerResponse(204, "book updated succcesfully")]
+        [SwaggerResponse(400, "invalid book data")]
         public IActionResult Edit(int id, EditBookDTO bk)
         {
             if (bk == null)
