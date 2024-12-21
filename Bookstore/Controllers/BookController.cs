@@ -1,11 +1,14 @@
 ﻿using Bookstore.DTO;
+using Bookstore.DTO.Author;
 using Bookstore.DTO.Book;
+using Bookstore.DTO.Catalog;
 using Bookstore.Model;
 using Bookstore.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace Bookstore.Controllers
 {
@@ -145,6 +148,7 @@ namespace Bookstore.Controllers
             }
             else return BadRequest(ModelState);
         }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete book", Tags = new[] { "Admin Operations" })]
@@ -156,6 +160,32 @@ namespace Bookstore.Controllers
             db.bookrepository.Delete(book);
             db.Save();
             return Ok();
+        }
+
+        [HttpGet("Search/{Name}")]
+        [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "Search for Books.")]
+        [SwaggerResponse(200, "Returns a list of Books.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(404, "No Books found with This Name.")]
+        public IActionResult Search(string Name)
+        {
+            var Books = db.bookrepository.Search(Name);
+            List<BookDTO> booksdto = new List<BookDTO>();
+            foreach (var book in Books)
+            {
+                var bk = new BookDTO();
+                bk.Id = book.Id;
+                bk.Title = book.Title;
+                bk.AuthorName = book.author.FullName;
+                bk.CatalogName = book.catalog.Name;
+                bk.Price = book.Price;
+                bk.Stock = book.Stock;
+                bk.PublishDate = book.PublishDate;
+                booksdto.Add(bk);
+            }
+            if (booksdto.Count == 0)
+                return NotFound("There are no Books with this name");
+            return Ok(booksdto);
         }
     }
 }

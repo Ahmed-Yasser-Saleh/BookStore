@@ -6,34 +6,25 @@ namespace Bookstore.Repository
     public class UnitOfwork
     {
         BookstoreContext db;
-        GenericRepository<Book> Bookrepository;
-        GenericRepository<Author> Authorrepository;
-        GenericRepository<Order> Orderrepository;
         GenericRepository<OrderDetails> OrderDetailsrepository;
         GenericRepository<Customer> Customerrepository;
         CatalogRepository Catalogrepository;
         AuthorRepository AuthorRepository;
         OrderRepository OrderRepository;
+        BookRepository BookRepository;
         public UnitOfwork(BookstoreContext db)
         {
             this.db = db;
         }
-        public GenericRepository<Book> bookrepository { get {
-                if(Bookrepository == null)
-                {
-                    Bookrepository = new GenericRepository<Book>(db);
-                }
-                return Bookrepository;
-            } }
-        public GenericRepository<Author> authorrepository
+        public BookRepository bookrepository
         {
             get
             {
-                if (Authorrepository == null)
+                if (BookRepository == null)
                 {
-                    Authorrepository = new GenericRepository<Author>(db);
+                    BookRepository = new BookRepository(db);
                 }
-                return Authorrepository;
+                return BookRepository;
             }
         }
         public GenericRepository<Customer> customerrepository
@@ -45,17 +36,6 @@ namespace Bookstore.Repository
                     Customerrepository = new GenericRepository<Customer>(db);
                 }
                 return Customerrepository;
-            }
-        }
-        public GenericRepository<Order> Genericorderrepository
-        {
-            get
-            {
-                if (Orderrepository == null)
-                {
-                    Orderrepository = new GenericRepository<Order>(db);
-                }
-                return Orderrepository;
             }
         }
         public OrderRepository Orderepository

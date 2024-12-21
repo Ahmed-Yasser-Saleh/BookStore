@@ -74,7 +74,7 @@ namespace Bookstore.Controllers
                 db.orderDetailsrepository.Add(orderdetails);
             }
             neworder.TotalPrice = totalprice;
-            db.Genericorderrepository.Edit(neworder);
+            db.Orderepository.Edit(neworder);
             db.Save();
             return Created();
         }
@@ -84,7 +84,7 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "The order was not found.")]
         public async Task<IActionResult> Get(int id)
         {
-            var order = db.Genericorderrepository.GetById(id);
+            var order = db.Orderepository.GetById(id);
             if (order == null) return NotFound("order not found");
             var stsvar = true;
             if (order.Status == Order_Status.CANCELED)
@@ -115,7 +115,7 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "The order was not found.")]
         public async Task<IActionResult> updatestatus(int id, string status)
         {
-            var order = db.Genericorderrepository.GetById(id);
+            var order = db.Orderepository.GetById(id);
             if (order == null) return NotFound("order not found");
 
             if(status == "CANCELED")
@@ -126,7 +126,7 @@ namespace Bookstore.Controllers
             {
                 return BadRequest("Please, Enter Valid Status");
             }
-            db.Genericorderrepository.Edit(order);
+            db.Orderepository.Edit(order);
             db.Save();
             return Ok();
         }
@@ -171,9 +171,9 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "The order was not found.")]
         public IActionResult Cancel(int id)
         {
-            var order = db.Genericorderrepository.GetById(id);
+            var order = db.Orderepository.GetById(id);
             if (order == null) return NotFound("order not found");
-            db.Genericorderrepository.Delete(order);
+            db.Orderepository.Delete(order);
             db.Save();
             return Ok();
         }

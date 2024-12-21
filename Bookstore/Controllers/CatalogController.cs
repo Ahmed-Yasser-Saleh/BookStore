@@ -119,5 +119,27 @@ namespace Bookstore.Controllers
             db.Save();
             return Ok();
         }
+
+        [HttpGet("Search/{Name}")]
+        [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "Search for Catalogs.")]
+        [SwaggerResponse(200, "Returns a list of Catalogs.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(404, "No Catalogs found with This Name.")]
+        public IActionResult Search(string Name)
+        {
+            var catalogs = db.catalogrepository.Search(Name);
+            List<GetCatalogDTO> catalogsdto = new List<GetCatalogDTO>();
+            foreach (var catalog in catalogs)
+            {
+                var ctg = new GetCatalogDTO();
+                ctg.Id = catalog.Id;
+                ctg.Name = catalog.Name;
+                ctg.Description = catalog.Description;
+                catalogsdto.Add(ctg);
+            }
+            if (catalogsdto.Count == 0)
+                return NotFound("There are no Catalogs with this Name");
+            return Ok(catalogsdto);
+        }
     }
 }

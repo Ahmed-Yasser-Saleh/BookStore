@@ -23,6 +23,7 @@ namespace Bookstore.Controllers
             this._mapper = _mapper;
 
         }
+
         [HttpGet]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Retrieves a list of all authors.")]
@@ -30,7 +31,7 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "No authors found.")]
         public IActionResult GetAll()
         {
-            var Authors = db.authorrepository.Selectall();
+            var Authors = db.authorRepository.Selectall();
             List<AuthorDTO> authorsdto = new List<AuthorDTO>();
             foreach (var Author in Authors)
             {
@@ -41,6 +42,7 @@ namespace Bookstore.Controllers
                 return NotFound();
             return Ok(authorsdto);
         }
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Retrieves an author by their ID.")]
@@ -48,11 +50,12 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "Author not found.")]
         public IActionResult Getbyid(int id)
         {
-            var Author = db.authorrepository.GetById(id);
+            var Author = db.authorRepository.GetById(id);
             if (Author == null) return NotFound();
             var author = _mapper.Map<AuthorDTO>(Author);
             return Ok(author);
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(
@@ -69,13 +72,14 @@ namespace Bookstore.Controllers
             if(ModelState.IsValid)
             {
                 var author = _mapper.Map<Author>(ath);
-                db.authorrepository.Add(author);
+                db.authorRepository.Add(author);
                 db.Save();
                 return Created();
             }
             else
                 return BadRequest(ModelState);
         }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Update Author", Tags = new[] { "Admin Operations" })]
@@ -91,12 +95,13 @@ namespace Bookstore.Controllers
             if (ModelState.IsValid)
             {
                 var author = _mapper.Map<Author>(ath);
-                db.authorrepository.Edit(author);
+                db.authorRepository.Edit(author);
                 db.Save();
                 return Ok();
             }
             else return BadRequest(ModelState);
         }
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Delete Author", Tags = new[] { "Admin Operations" })]
@@ -104,11 +109,30 @@ namespace Bookstore.Controllers
         [SwaggerResponse(404, "Author not found.")]
         public IActionResult Delete(int id)
         {
-            var author = db.authorrepository.GetById(id);
+            var author = db.authorRepository.GetById(id);
             if (author == null) return NotFound();
-            db.authorrepository.Delete(author);
+            db.authorRepository.Delete(author);
             db.Save();
             return Ok();
+        }
+
+        [HttpGet("Search/{Name}")]
+        [Authorize(Roles = "Customer,Admin")]
+        [SwaggerOperation(Summary = "Search for authors.")]
+        [SwaggerResponse(200, "Returns a list of authors.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(404, "No authors found with This Name.")]
+        public IActionResult Search(string Name)
+        {
+            var authors = db.authorRepository.Search(Name);
+            List<AuthorDTO> authorsdto = new List<AuthorDTO>();
+            foreach (var Author in authors)
+            {
+                var newauthor = _mapper.Map<AuthorDTO>(Author);
+                authorsdto.Add(newauthor);
+            }
+            if (authorsdto.Count == 0)
+                return NotFound("There are no authors with this Name");
+            return Ok(authorsdto);
         }
     }
 }
