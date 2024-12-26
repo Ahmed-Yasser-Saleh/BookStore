@@ -39,7 +39,7 @@ namespace Bookstore.Controllers
                 authorsdto.Add(newauthor);
             }
             if (authorsdto.Count == 0)
-                return NotFound();
+                return NotFound(new { Status = 404, ErrorMassege = "No authors found" });
             return Ok(authorsdto);
         }
 
@@ -51,7 +51,7 @@ namespace Bookstore.Controllers
         public IActionResult Getbyid(int id)
         {
             var Author = db.authorRepository.GetById(id);
-            if (Author == null) return NotFound();
+            if (Author == null) return NotFound(new { Status = 404, ErrorMassege = "Author not found" });
             var author = _mapper.Map<AuthorDTO>(Author);
             return Ok(author);
         }
@@ -63,21 +63,21 @@ namespace Bookstore.Controllers
             Tags = new[] { "Admin Operations" }
             )
             ]
-        [SwaggerResponse(201, "Author was created successfully.")]
+        [SwaggerResponse(200, "Author was created successfully.")]
         [SwaggerResponse(400, "Invalid input data.")]
         public IActionResult Add(AddAuthorDTO ath)
         {
             if (ath == null)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
             if(ModelState.IsValid)
             {
                 var author = _mapper.Map<Author>(ath);
                 db.authorRepository.Add(author);
                 db.Save();
-                return Created();
+                return Ok(new { Status = "Creation Successful" });
             }
             else
-                return BadRequest(ModelState);
+                return BadRequest(ModelState); 
         }
 
         [HttpPut("{id}")]
@@ -89,15 +89,15 @@ namespace Bookstore.Controllers
         public IActionResult Edit(int id, EditAuthorDTO ath)
         {
             if (ath == null)
-                return BadRequest();
-            if(id != ath.Id)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
+            if (id != ath.Id)
+                return BadRequest(new { Status = 400, ErrorMassege = "Not the same Id" });
             if (ModelState.IsValid)
             {
                 var author = _mapper.Map<Author>(ath);
                 db.authorRepository.Edit(author);
                 db.Save();
-                return Ok();
+                return Ok(new { Status = "updated Successful" });
             }
             else return BadRequest(ModelState);
         }
@@ -110,10 +110,10 @@ namespace Bookstore.Controllers
         public IActionResult Delete(int id)
         {
             var author = db.authorRepository.GetById(id);
-            if (author == null) return NotFound();
+            if (author == null) return NotFound(new { Status = 404, ErrorMassege = "Author Not Found" });
             db.authorRepository.Delete(author);
             db.Save();
-            return Ok();
+            return Ok(new { Status = "Deleted Successful" });
         }
 
         [HttpGet("Search/{Name}")]
@@ -131,7 +131,7 @@ namespace Bookstore.Controllers
                 authorsdto.Add(newauthor);
             }
             if (authorsdto.Count == 0)
-                return NotFound("There are no authors with this Name");
+                return NotFound(new { Status = 404, ErrorMassege = "There are no authors with this Name" });
             return Ok(authorsdto);
         }
     }

@@ -24,19 +24,20 @@ namespace Bookstore.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Creates a new order for a customer.")]
-        [SwaggerResponse(201, "The order was created successfully.")]
+        [SwaggerResponse(200, "The order was created successfully.")]
         [SwaggerResponse(400, "The input is invalid or a book is out of stock.")]
         [SwaggerResponse(404, "The customer does not exist.")]
         public async Task<IActionResult> Add(AddorderDTO orderDTO)
         {
             if (orderDTO == null)
             {
-                return BadRequest("Empty input");
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty input" });
             }
             var user = await userManager.FindByIdAsync(orderDTO.CustomerId);
             if (user == null)
-                return NotFound("Customer not exist");
+                return NotFound(new { Status = 404, ErrorMassege = "Customer not exist" });
             var neworder = new Order
             {
                 CustomerId = user.Id,
@@ -51,14 +52,14 @@ namespace Bookstore.Controllers
                 var book = db.bookrepository.GetById(order.BookId);
                 if (book == null)
                 {
-                    return BadRequest($"book with id: {order.BookId} not exist");
+                    return BadRequest(new { Status = 400, ErrorMassege = $"book with id: {order.BookId} not exist" });
                 }
                 if (neworder.orderDetails.Any(x => x.BookId == book.Id))
-                    return BadRequest("book id has choossed");
+                    return BadRequest(new { Status = 400, ErrorMassege = "book id has choossed" });
 
                 if (book.Stock < order.quantity)
                 {
-                    return BadRequest($"No enugh books for {book.Title} in stock");
+                    return BadRequest(new { Status = 400, ErrorMassege = $"No enugh books for {book.Title} in stock" });
                 }
                 var orderdetails = new OrderDetails
                 {
@@ -76,16 +77,18 @@ namespace Bookstore.Controllers
             neworder.TotalPrice = totalprice;
             db.Orderepository.Edit(neworder);
             db.Save();
-            return Created();
+            return Ok(new { Status = "Creation Successful" });
         }
+
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Retrieves order details by order ID.")]
+        [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Retrieves order details by order ID.", Tags = new[] { "Admin Operations" })]
         [SwaggerResponse(200, "Returns the order details.", typeof(GetorderDTO))]
         [SwaggerResponse(404, "The order was not found.")]
         public async Task<IActionResult> Get(int id)
         {
             var order = db.Orderepository.GetById(id);
-            if (order == null) return NotFound("order not found");
+            if (order == null) return NotFound(new { Status = 404, ErrorMassege = "order not found" });
             var stsvar = true;
             if (order.Status == Order_Status.CANCELED)
                 stsvar = false;
@@ -108,6 +111,7 @@ namespace Bookstore.Controllers
             ord.totalprice = Totalprice;
             return Ok(ord);
         }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Updates the status of an order.", Tags = new[] { "Admin Operations" })]
@@ -116,7 +120,7 @@ namespace Bookstore.Controllers
         public async Task<IActionResult> updatestatus(int id, string status)
         {
             var order = db.Orderepository.GetById(id);
-            if (order == null) return NotFound("order not found");
+            if (order == null) return NotFound(new { Status = 404, ErrorMassege = "order not found" });
 
             if(status == "CANCELED")
                 order.Status = Order_Status.CANCELED;
@@ -124,13 +128,15 @@ namespace Bookstore.Controllers
                 order.Status = Order_Status.CREATED;
             else
             {
-                return BadRequest("Please, Enter Valid Status");
+                return BadRequest(new { Status = 400, ErrorMassege = "InValid Status" });
             }
             db.Orderepository.Edit(order);
             db.Save();
             return Ok();
         }
+
         [HttpGet("Customer/{id}")]
+        [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Get all orders for customer.")]
         [SwaggerResponse(200, "return all orders for customer")]
         [SwaggerResponse(404, "The order with customerid was not found.")]
@@ -161,7 +167,7 @@ namespace Bookstore.Controllers
                 ord.totalprice = Totalprice;
                 ordersDTO.Add(ord);
             }
-            if(ordersDTO.Count == 0) return NotFound($"There are no orders for Customer: {cs.fullname}");
+            if(ordersDTO.Count == 0) return NotFound(new { Status = 404, ErrorMassege = $"There are no orders for Customer: {cs.fullname}" });
             return Ok(ordersDTO);
         }
         [HttpDelete("{id}")]
@@ -172,7 +178,7 @@ namespace Bookstore.Controllers
         public IActionResult Cancel(int id)
         {
             var order = db.Orderepository.GetById(id);
-            if (order == null) return NotFound("order not found");
+            if (order == null) return NotFound(new { Status = 404, ErrorMassege = "order not found" });
             db.Orderepository.Delete(order);
             db.Save();
             return Ok();

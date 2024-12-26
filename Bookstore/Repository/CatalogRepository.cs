@@ -14,7 +14,11 @@ namespace Bookstore.Repository
             var x = db.Catalogs.Any(c => c.Id == id);
             return x;
         }
-
+        public bool Checkname(string name)
+        {
+            var status = db.Catalogs.Any(ctg => ctg.Name.ToUpper() == name.ToUpper());
+            return status;
+        }
         public List<Catalog> Search(string name)
         {
             if (!string.IsNullOrEmpty(name))

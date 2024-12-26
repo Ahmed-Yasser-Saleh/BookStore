@@ -9,7 +9,11 @@ namespace Bookstore.Repository
         {
             
         }
-
+        public bool Checkname(string name)
+        {
+            var status = db.Books.Any(bk => bk.Title.ToUpper() == name.ToUpper());
+            return status;
+        }
         public List<Book> Search(string name)
         {
             if (!string.IsNullOrEmpty(name))

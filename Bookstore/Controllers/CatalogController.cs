@@ -39,19 +39,19 @@ namespace Bookstore.Controllers
                 catalogsdto.Add(ctg);
             }
             if (catalogsdto.Count == 0)
-                return NotFound();
+                return NotFound(new { Status = 404, ErrorMassege = "Catalogs Not Found" });
             return Ok(catalogsdto);
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
-        [SwaggerOperation(Summary = "can earch on catalog by catalog id ")]
+        [SwaggerOperation(Summary = "Get catalog by id ")]
         [SwaggerResponse(200, "return Catalog data", typeof(BookDTO))]
         [SwaggerResponse(404, "no Catalog founded")]
         public IActionResult Getbyid(int id)
         {
             var catalog = db.catalogrepository.GetById(id);
-            if (catalog == null) return NotFound();
+            if (catalog == null) return NotFound(new { Status = 404, ErrorMassege = "Catalog Not Found" });
             var ctg = new GetCatalogDTO()
             {
                Id = catalog.Id,
@@ -63,21 +63,27 @@ namespace Bookstore.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [SwaggerOperation(Summary = "Add Catalog", Tags = new[] { "Admin Operations" })]
-        [SwaggerResponse(201, "Catalog was created successfully.")]
+        [SwaggerResponse(200, "Catalog was created successfully.")]
         [SwaggerResponse(400, "Invalid input data.")]
         public IActionResult Add(AddcatalogDTO ctg)
         {
             if (ctg == null)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
             if (ModelState.IsValid)
             {
-                var catalog = new Catalog {
-                Name = ctg.Name,
-                Description = ctg.Description,
-                };
-                db.catalogrepository.Add(catalog);
-                db.Save();
-                return Created();
+                if (!db.catalogrepository.Checkname(ctg.Name))
+                {
+                    var catalog = new Catalog
+                    {
+                        Name = ctg.Name,
+                        Description = ctg.Description,
+                    };
+                    db.catalogrepository.Add(catalog);
+                    db.Save();
+                    return Ok(new { Status = "Creation Successful" });
+                }
+                else
+                    return BadRequest(new { Status = 400, ErrorMassege = $"There is catalog with name : {ctg.Name}" });
             }
             else
                 return BadRequest(ModelState);
@@ -90,9 +96,9 @@ namespace Bookstore.Controllers
         public IActionResult Edit(int id, EditCatalogDTO ctg)
         {
             if (ctg == null)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
             if (ctg.id != id)
-                return BadRequest("Not the same id");
+                return BadRequest(new { Status = 400, ErrorMassege = "Not the same id" });
             if (ModelState.IsValid)
             {
                 var catalog = new Catalog
@@ -114,7 +120,7 @@ namespace Bookstore.Controllers
         public IActionResult Delete(int id)
         {
             var catalog = db.catalogrepository.GetById(id);
-            if (catalog == null) return NotFound();
+            if (catalog == null) return NotFound(new { Status = 404, ErrorMassege = "Catalog Not Found" });
             db.catalogrepository.Delete(catalog);
             db.Save();
             return Ok();
@@ -138,7 +144,7 @@ namespace Bookstore.Controllers
                 catalogsdto.Add(ctg);
             }
             if (catalogsdto.Count == 0)
-                return NotFound("There are no Catalogs with this Name");
+                return NotFound(new { Status = 404, ErrorMassege = "Catalog Not Found" });
             return Ok(catalogsdto);
         }
     }

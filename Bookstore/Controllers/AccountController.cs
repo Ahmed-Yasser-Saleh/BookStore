@@ -1,11 +1,20 @@
-﻿using Bookstore.DTO;
+﻿
+using Bookstore.DTO;
 using Bookstore.DTO.Account;
+using Bookstore.DTO.Password;
 using Bookstore.DTO.Register;
 using Bookstore.Model;
 using Bookstore.Repository;
+using Bookstore.TokenManagerService;
+using Microsoft.AspNetCore.Authorization;
+
+//using Castle.Core.Smtp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,10 +34,11 @@ namespace Bookstore.Controllers
 
         public AccountController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
         {
-          //  this.db = db;
+            //  this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
+
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterDTO Rg)
         {
@@ -39,11 +49,21 @@ namespace Bookstore.Controllers
 
             if (Rg.password != Rg.Confirmpassword)
             {
-                return BadRequest("Password must match ConfirmPassword");
+                return BadRequest(new { Status = 400, ErrorMassege = "Password must match ConfirmPassword" }); 
             }
 
             if (Rg.isAdmin)
             {
+                var user = await userManager.FindByNameAsync(Rg.username);
+                if (user != null)
+                {
+                    return BadRequest(new { Status = 400, ErrorMassege = "Register failed, There is Admin with the same username" });
+                }
+                var user2 = await userManager.FindByEmailAsync(Rg.email);
+                if (user2 != null)
+                {
+                    return BadRequest(new { Status = 400, ErrorMassege = "Register failed, There is Admin with the same email" });
+                }
                 var Adm = new Admin
                 {
                     Email = Rg.email,
@@ -54,23 +74,45 @@ namespace Bookstore.Controllers
                 var res = await userManager.CreateAsync(Adm, Rg.password);
                 if (res.Succeeded)
                 {
+                    //var admin = await userManager.FindByEmailAsync(Rg.email);
+                    //var confirmgeneratedtoken = await userManager.GenerateEmailConfirmationTokenAsync(admin);
+                    //if (rs.Succeeded)
+                    //{
+                    //    return Ok(new { Status = "Admin registered successfully.",
+                    //                    confirmedtoken =  $"{confirmgeneratedtoken}" });
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
+                    //}
                     var rs = await userManager.AddToRoleAsync(Adm, "Admin");
                     if (rs.Succeeded)
                     {
-                        return Ok("Admin registered successfully.");
+                        return Ok(new { Status = "Admin registered successfully." });
                     }
                     else
                     {
-                        return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
+                        return BadRequest(new { Status = 400, ErrorMassege = "AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)) });
                     }
                 }
+
                 else
                 {
-                    return BadRequest("Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)));
+                    return BadRequest(new { Status = 400, ErrorMassege = "Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)) });
                 }
             }
             else
             {
+                var user = await userManager.FindByNameAsync(Rg.username);
+                if (user != null)
+                {
+                    return BadRequest(new { Status = 400, ErrorMassege = "Register failed, There is customer with the same username" });
+                }
+                var user2 = await userManager.FindByEmailAsync(Rg.email);
+                if (user2 != null)
+                {
+                    return BadRequest(new { Status = 400, ErrorMassege = "Register failed, There is customer with the same email" });
+                }
                 var cust = new Customer
                 {
                     fullname = Rg.fullname,
@@ -79,23 +121,28 @@ namespace Bookstore.Controllers
                     UserName = Rg.username,
                     PhoneNumber = Rg.phonenumber
                 };
-
                 var res = await userManager.CreateAsync(cust, Rg.password);
                 if (res.Succeeded)
                 {
+                    //var confirmgeneratedtoken = await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    //var rs = await userManager.AddToRoleAsync(cust, "Customer");
+                    //if (rs.Succeeded)
+                    //{
+                    //    return Ok(new { Status = $"Customer registered successfully. please confirm your email with code: {confirmgeneratedtoken}" });
+                    //}
                     var rs = await userManager.AddToRoleAsync(cust, "Customer");
                     if (rs.Succeeded)
                     {
-                        return Ok("Customer registered successfully.");
+                        return Ok(new { Status = "Customer registered successfully." });
                     }
                     else
                     {
-                        return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
+                        return BadRequest(new { Status = 400, ErrorMassege = "AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)) });
                     }
                 }
                 else
                 {
-                    return BadRequest("Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)));
+                    return BadRequest(new { Status = 400, ErrorMassege = "Create failed: " + string.Join(", ", res.Errors.Select(e => e.Description)) });
                 }
             }
         }
@@ -104,14 +151,19 @@ namespace Bookstore.Controllers
         {
             if (ModelState.IsValid)
             {
-                var rs = signmanager.PasswordSignInAsync(cs.username, cs.password, false, false).Result;
+                var user = await userManager.FindByEmailAsync(cs.email);
+                if (user == null)
+                    return Unauthorized(new { Status = 401, ErrorMassege = "Unauthorized" });
+                //var isconfirmed = await userManager.IsEmailConfirmedAsync(user);
+                //if (!isconfirmed)
+                //    return BadRequest("Email Not Confirmed");
+                var rs = signmanager.PasswordSignInAsync(user.UserName, cs.password, false, false).Result;
                 if (rs.Succeeded)
                 {
-                    var user = await userManager.FindByNameAsync(cs.username);
                     #region generate token
 
                     List<Claim> userdata = new List<Claim>();
-                    userdata.Add(new Claim(ClaimTypes.Name, user.UserName));
+                    userdata.Add(new Claim(ClaimTypes.Email, user.Email));
                     userdata.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
                     var roles = await userManager.GetRolesAsync(user);
                     if (roles.Any())
@@ -129,39 +181,83 @@ namespace Bookstore.Controllers
                     signingCredentials: signingcer
                     );
                     var tokenstring = new JwtSecurityTokenHandler().WriteToken(token);
-                    return Ok(tokenstring);
+                    return Ok(new { token = tokenstring });
                     #endregion
                 }
                 else
-                    return Unauthorized();
+                    return BadRequest(new { Status = 400, ErrorMassege = "Login Failed" });
+            }
+            else
+                return Ok(); //BadRequest(ModelState);
+        }
+        [HttpPost("ChangePassword")]
+        [Authorize(Roles = "Customer,Admin")]
+        public IActionResult ChangePassword(ChangePasswordDTO passwordDTO)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = userManager.FindByEmailAsync(passwordDTO.email).Result;
+                if (user == null)
+                {
+                    return BadRequest(new { Status = 401, ErrorMassege = $"user not exist with email: {passwordDTO.email}" });
+                }
+                if (passwordDTO.newpassword != passwordDTO.confirmpassword)
+                {
+                    return BadRequest(new { Status = 401, ErrorMassege = "confirm password does not match new password" });
+                }
+                var result = userManager.ChangePasswordAsync(user, passwordDTO.oldpassword, passwordDTO.newpassword).Result;
+                if (result.Succeeded)
+                {
+                    return Ok(new { Status = "Password changed" });
+                }
+                else
+                    return BadRequest(new { Status = 401, ErrorMassege = "old password is not correct" });
             }
             else
                 return BadRequest(ModelState);
         }
-        [HttpPost("ChangePassword")]
-        public IActionResult ChangePassword(ChangePasswordDTO passwordDTO)
-        {
-            var user = userManager.FindByNameAsync(passwordDTO.username).Result;
-            if(user == null) {
-                return BadRequest("user not exist");
-            }
-            if(passwordDTO.newpassword != passwordDTO.confirmpassword) {
-                return BadRequest("Please, Enter the confirm password with your new password to confirm");
-            }
-            var result = userManager.ChangePasswordAsync(user, passwordDTO.oldpassword, passwordDTO.newpassword).Result;
-            if (result.Succeeded)
-            {
-                return Ok("Password changed");
-            }
-            else
-               return BadRequest("old password is not correct");
-        }
-        [HttpPost("Logout")]
+
+        //[HttpPost("confirm-email")]
+        //public async Task<IActionResult> ConfirmEmail(string email, string Confirmedtoken)
+        //{
+            
+        //    if (string.IsNullOrEmpty(Confirmedtoken))
+        //    {
+        //        return BadRequest("Invalid token.");
+        //    }
+
+        //    var user = await userManager.FindByEmailAsync(email);
+        //    if (user == null)
+        //    {
+        //        return BadRequest($"There is no customer with email: {email}");
+        //    }
+
+        //    var isconfirmed = await userManager.ConfirmEmailAsync(user, Confirmedtoken);
+        //    if (isconfirmed.Succeeded)
+        //    {
+        //        return Ok("Email confirmed successfully!");
+        //    }
+        //    else
+        //    {
+        //        return BadRequest("Email confirmation failed");
+        //    }
+            
+        //}
+
+        [HttpGet("Logout")]
+        [Authorize(Roles = "Customer,Admin")]
         public IActionResult Logout()
         {
+            // Extract the token from the Authorization header
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        
+            // Add the token to the blacklist
+            TokenManager.AddToBlacklist(token);
+        
+            // Sign out the user
             signmanager.SignOutAsync();
-            //token will be not valid 
-            return Ok();
+        
+            return Ok(new { Status = "Logged out successfully." });
         }
     }
 }

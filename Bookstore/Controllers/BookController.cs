@@ -43,17 +43,17 @@ namespace Bookstore.Controllers
                 booksdto.Add(bk);
             }
             if (booksdto.Count == 0)
-                return NotFound();
+                return NotFound(new { Status = 404, ErrorMassege = "No books Found" });
             return Ok(booksdto);
         }
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
-        [SwaggerOperation(Summary = "can earch on book by book id ")]
+        [SwaggerOperation(Summary = "Get book by book id ")]
         [SwaggerResponse(200, "return book data", typeof(BookDTO))]
         [SwaggerResponse(404, "if no book founded")]
         public IActionResult Getbyid(int id) {
         var book = db.bookrepository.GetById(id);
-        if(book == null) return NotFound();
+        if(book == null) return NotFound(new { Status = 404, ErrorMassege = "No book Found" });
             var bk = new BookDTO()
             {
                 Id = book.Id,
@@ -68,7 +68,7 @@ namespace Bookstore.Controllers
         }
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        [SwaggerResponse(201, "Book created",typeof(Book))]
+        [SwaggerResponse(200, "Book created",typeof(Book))]
         [SwaggerResponse(400, "Catalog or author not found or not valid data")]
         [Consumes("application/json")]
         [SwaggerOperation(
@@ -80,31 +80,36 @@ namespace Bookstore.Controllers
         public IActionResult Add(AddBookDTO bk)
         {
             if (bk == null)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty input" });
             var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!CatalogExists)
             {
-                return BadRequest("Catalog not Found.");
+                return BadRequest(new { Status = 400, ErrorMassege = "Catalog not Found" });
             }
             var AuthorExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!AuthorExists)
             {
-                return BadRequest("Author not Found.");
+                return BadRequest(new { Status = 400, ErrorMassege = "Author not Found" });
             }
             if (ModelState.IsValid)
             {
-                var pd = new Book()
+                if (!db.bookrepository.Checkname(bk.Title))
                 {
-                    Title = bk.Title,
-                    Price = bk.Price,
-                    AuthorId = bk.AuthorId,
-                    CatalogId = bk.CatalogId,
-                    Stock = bk.Stock,
-                    PublishDate = bk.PublishDate
-                };
-                db.bookrepository.Add(pd);
-                db.Save();
-                return Created();
+                    var pd = new Book()
+                    {
+                        Title = bk.Title,
+                        Price = bk.Price,
+                        AuthorId = bk.AuthorId,
+                        CatalogId = bk.CatalogId,
+                        Stock = bk.Stock,
+                        PublishDate = bk.PublishDate
+                    };
+                    db.bookrepository.Add(pd);
+                    db.Save();
+                    return Ok(new { Status = "Creation Successful" });
+                }
+                else
+                    return BadRequest(new { Status = 404, ErrorMassege = $"There is book with title: {bk.Title}" });
             }
             else
                 return BadRequest(ModelState);
@@ -117,18 +122,18 @@ namespace Bookstore.Controllers
         public IActionResult Edit(int id, EditBookDTO bk)
         {
             if (bk == null)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
             if(bk.Id != id)
-                return BadRequest();
+                return BadRequest(new { Status = 400, ErrorMassege = "Not the same Id" });
             var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!CatalogExists)
             {
-                return BadRequest("Catalog not Found.");
+                return BadRequest(new { Status = 400, ErrorMassege = "Catalog not Found" });
             }
             var AuthorExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!AuthorExists)
             {
-                return BadRequest("Author not Found.");
+                return BadRequest(new { Status = 400, ErrorMassege = "Author not Found" });
             }
             if (ModelState.IsValid)
             {
@@ -156,7 +161,7 @@ namespace Bookstore.Controllers
         public IActionResult Delete(int id)
         {
             var book = db.bookrepository.GetById(id);
-            if (book == null) return NotFound();
+            if (book == null) return NotFound(new { Status = 404, ErrorMassege = "Book not Found" });
             db.bookrepository.Delete(book);
             db.Save();
             return Ok();
@@ -184,7 +189,7 @@ namespace Bookstore.Controllers
                 booksdto.Add(bk);
             }
             if (booksdto.Count == 0)
-                return NotFound("There are no Books with this name");
+                return NotFound(new { Status = 404, ErrorMassege = "Books Not Found" });
             return Ok(booksdto);
         }
     }

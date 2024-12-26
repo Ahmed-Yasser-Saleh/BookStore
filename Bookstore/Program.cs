@@ -10,6 +10,11 @@ using System.Text;
 using System;
 using Microsoft.Extensions.Options;
 using System.Reflection;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using System.IdentityModel.Tokens.Jwt;
+using Bookstore.TokenManagerService;
+
+//using Castle.Core.Smtp;
 
 namespace Bookstore
 {
@@ -77,9 +82,12 @@ namespace Bookstore
                 conf.EnableAnnotations();
             });
 
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<BookstoreContext>();
-
-
+            builder.Services.AddIdentity<IdentityUser, IdentityRole>
+                //( option =>
+                //{ option.SignIn.RequireConfirmedEmail = true;// from email confirmation
+                //  option.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider; //make the code generated is short 
+                //}
+                ().AddEntityFrameworkStores<BookstoreContext>().AddDefaultTokenProviders();
 
             builder.Services.AddAuthentication(option =>
             {
@@ -103,7 +111,24 @@ namespace Bookstore
                     ValidateAudience = false,
                     ValidateLifetime = true
                 };
-            });
+                op.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = context =>
+                    {
+                        var token = context.SecurityToken.ToString();//as JwtSecurityToken;
+                        if (token != null)
+                        {
+                            if (TokenManager.BlacklistedTokens.Contains(token)) 
+                            {
+                                context.Fail("This token has been revoked.");
+                            }
+
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+             }
+            ); 
             builder.Services.Configure<IdentityOptions>(options =>
             {
                 // Password settings

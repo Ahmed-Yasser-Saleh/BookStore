@@ -2,6 +2,7 @@
 using Bookstore.DTO.Customer;
 using Bookstore.Model;
 using Bookstore.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -29,7 +30,8 @@ namespace Bookstore.Controllers
         }
 
         [HttpGet]
-        [SwaggerOperation(Summary = "Retrieves all customers in the 'Customer' role.")]
+        [Authorize(Roles = "Admin")]
+        [SwaggerOperation(Summary = "Retrieves all customers", Tags = new[] { "Admin Operations" })]
         [SwaggerResponse(200, "Returns a list of customers.", typeof(List<CustomerDTO>))]
         [SwaggerResponse(404, "No customers were found.")]
         public IActionResult Get()
@@ -48,17 +50,18 @@ namespace Bookstore.Controllers
                 Customersdto.Add(cs);
             }
             if (Customersdto.Count == 0)
-                return NotFound();
+                return NotFound(new { Status = 404, ErrorMassege = "Customers Not Found" });
             return Ok(Customersdto);
         }
         [HttpGet("{id}")]
-        [SwaggerOperation(Summary = "Retrieves a customer by their ID.")]
+        [Authorize(Roles = "Customer, Admin")]
+        [SwaggerOperation(Summary = "Retrieves a customer by its ID.")]
         [SwaggerResponse(200, "Returns the customer details.", typeof(CustomerDTO))]
         [SwaggerResponse(404, "No customer was found with the given ID.")]
         public IActionResult GetbyId(string id)
         {
             var cs = (Customer)userManager.GetUsersInRoleAsync("Customer").Result.Where(c => c.Id == id).SingleOrDefault();
-            if (cs == null) return NotFound();
+            if (cs == null) return NotFound(new { Status = 404, ErrorMassege = "Customer Not Found" });
             var CS = new CustomerDTO()
             {
                 fullname = cs.fullname,
@@ -70,6 +73,7 @@ namespace Bookstore.Controllers
             return Ok(CS);
         }
         [HttpPut]
+        [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Updates an existing customer's details.")]
         [SwaggerResponse(200, "The customer details have been successfully updated.")]
         [SwaggerResponse(404, "No customer was found with the given ID.")]
@@ -79,7 +83,7 @@ namespace Bookstore.Controllers
             if (ModelState.IsValid)
             {
                 var cs = (Customer)userManager.FindByIdAsync(CustomerEditDTO.Id).Result;
-                if (cs == null) return NotFound();
+                if (cs == null) return NotFound(new { Status = 404, ErrorMassege = "Customer Not Found" });
                 cs.Id = CustomerEditDTO.Id;
                 cs.PhoneNumber = CustomerEditDTO.phonenumber;
                 cs.address = CustomerEditDTO.address;
@@ -90,7 +94,7 @@ namespace Bookstore.Controllers
                 if (res.Succeeded)
                     return Ok();
                 else
-                    return BadRequest();
+                    return BadRequest(new { Status = 400, ErrorMassege = "Edit Customer failed" });
                 //db.customerrepository.Edit(cs);
                 //db.Save();
                 //return Ok();
