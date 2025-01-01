@@ -10,6 +10,7 @@ namespace Bookstore.DTO
         public string CatalogName { get; set; }
         public decimal Price { get; set; }
         public int Stock { get; set; }
+        public string? image { get; set; }
         public DateOnly PublishDate { get; set; }
     }
 }

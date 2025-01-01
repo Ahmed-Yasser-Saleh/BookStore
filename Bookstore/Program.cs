@@ -87,7 +87,14 @@ namespace Bookstore
                 //{ option.SignIn.RequireConfirmedEmail = true;// from email confirmation
                 //  option.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultProvider; //make the code generated is short 
                 //}
-                ().AddEntityFrameworkStores<BookstoreContext>().AddDefaultTokenProviders();
+                (options =>
+                {
+                    options.Password.RequireDigit = true; // Must contain at least one digit
+                    options.Password.RequiredLength = 3;  // Minimum length of 3 characters
+                    options.Password.RequireNonAlphanumeric = false; //not Must contain at least one special character
+                    options.Password.RequireUppercase = false; // not Must contain at least one uppercase letter
+                    options.Password.RequireLowercase = false;// not Must contain at least one lowercase letter)
+                }).AddEntityFrameworkStores<BookstoreContext>().AddDefaultTokenProviders();
 
             builder.Services.AddAuthentication(option =>
             {
@@ -129,15 +136,15 @@ namespace Bookstore
                 };
              }
             ); 
-            builder.Services.Configure<IdentityOptions>(options =>
-            {
-                // Password settings
-                options.Password.RequireDigit = true; // Must contain at least one digit
-                options.Password.RequiredLength = 3;  // Minimum length of 3 characters
-                options.Password.RequireNonAlphanumeric = false; //not Must contain at least one special character
-                options.Password.RequireUppercase = false; // not Must contain at least one uppercase letter
-                options.Password.RequireLowercase = false; // not Must contain at least one lowercase letter
-            });
+            //builder.Services.Configure<IdentityOptions>(options =>
+            //{
+            //    // Password settings
+            //    options.Password.RequireDigit = true; // Must contain at least one digit
+            //    options.Password.RequiredLength = 3;  // Minimum length of 3 characters
+            //    options.Password.RequireNonAlphanumeric = false; //not Must contain at least one special character
+            //    options.Password.RequireUppercase = false; // not Must contain at least one uppercase letter
+            //    options.Password.RequireLowercase = false; // not Must contain at least one lowercase letter
+            //});
             var stringpolicy = "ay7aga";
             builder.Services.AddCors(op =>
             {

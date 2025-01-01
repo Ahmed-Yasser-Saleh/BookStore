@@ -44,6 +44,9 @@ namespace Bookstore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Authors");
@@ -62,6 +65,9 @@ namespace Bookstore.Migrations
 
                     b.Property<int>("CatalogId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("money");
@@ -184,12 +190,12 @@ namespace Bookstore.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "42b8965b-68ca-4b41-8714-290ac9862bd0",
+                            Id = "b2f1e500-9da2-4759-8f0e-f6f010a2019e",
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = "fcc54ea9-524d-4d39-ba02-268493c2301a",
+                            Id = "335b5ae8-9cbb-4ba1-a898-39ada32997a3",
                             Name = "Customer"
                         });
                 });
@@ -378,12 +384,24 @@ namespace Bookstore.Migrations
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("AspNetUsers", t =>
+                        {
+                            t.Property("Image")
+                                .HasColumnName("Admin_Image");
+                        });
+
                     b.HasDiscriminator().HasValue("Admin");
                 });
 
             modelBuilder.Entity("Bookstore.Model.Customer", b =>
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("address")
                         .IsRequired()

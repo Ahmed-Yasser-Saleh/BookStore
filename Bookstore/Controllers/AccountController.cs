@@ -38,7 +38,7 @@ namespace Bookstore.Controllers
             this.userManager = userManager;
             this.signmanager = signmanager;
         }
-
+       
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterDTO Rg)
         {

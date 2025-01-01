@@ -14,6 +14,7 @@ namespace Bookstore.Model
         [Column (TypeName = "money")]
         public decimal Price { get; set; }
         public int Stock { get; set; }
+        public string? Image { get; set; }
         public DateOnly PublishDate { get; set; }
         public virtual Author author { get; set; }
         public virtual Catalog catalog { get; set; }

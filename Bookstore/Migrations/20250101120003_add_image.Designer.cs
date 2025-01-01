@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookstore.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    [Migration("20241130144906_v5")]
-    partial class v5
+    [Migration("20250101120003_add_image")]
+    partial class add_image
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,6 +47,9 @@ namespace Bookstore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Authors");
@@ -65,6 +68,9 @@ namespace Bookstore.Migrations
 
                     b.Property<int>("CatalogId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("money");
@@ -124,9 +130,8 @@ namespace Bookstore.Migrations
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
@@ -188,12 +193,12 @@ namespace Bookstore.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "67b61473-bd0a-4b49-8250-6dad3d192c3a",
+                            Id = "b2f1e500-9da2-4759-8f0e-f6f010a2019e",
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = "dd77c49a-bdff-4346-8de4-2cb47c7ecf81",
+                            Id = "335b5ae8-9cbb-4ba1-a898-39ada32997a3",
                             Name = "Customer"
                         });
                 });
@@ -382,12 +387,24 @@ namespace Bookstore.Migrations
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("AspNetUsers", t =>
+                        {
+                            t.Property("Image")
+                                .HasColumnName("Admin_Image");
+                        });
+
                     b.HasDiscriminator().HasValue("Admin");
                 });
 
             modelBuilder.Entity("Bookstore.Model.Customer", b =>
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("address")
                         .IsRequired()

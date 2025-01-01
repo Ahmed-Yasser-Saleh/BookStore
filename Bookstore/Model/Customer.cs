@@ -6,6 +6,7 @@ namespace Bookstore.Model
     {
         public string fullname { get; set; }
         public string address { get; set; }
+        public string? Image { get; set; }
         public virtual List<Order> Orders { get; set; } = new List<Order>();
     }
 }
