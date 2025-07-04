@@ -28,9 +28,10 @@ namespace Bookstore
 
             builder.Services.AddControllers();
 
-            builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Publish")));
+            builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Book")));
 
             builder.Services.AddScoped<UnitOfwork>();
+           // builder.Services.AddScoped<IFormatProvider>();
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(conf =>
@@ -174,11 +175,10 @@ namespace Bookstore
                 options.SwaggerEndpoint("/swagger/Authors/swagger.json", "Authors");
                 options.SwaggerEndpoint("/swagger/Orders/swagger.json", "Orders");
                 options.SwaggerEndpoint("/swagger/Account/swagger.json", "Account");
-                options.RoutePrefix = "swagger";
+                options.RoutePrefix = "swagger"; //default url for swagger http://localhost:port/swagger
                 options.DisplayRequestDuration();
                 options.DefaultModelsExpandDepth(-1);
             });
-
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
@@ -186,6 +186,8 @@ namespace Bookstore
             app.UseCors(stringpolicy);
             app.MapControllers();
 
+            //allow anything inside wwwrot available via browser or client app
+            app.UseStaticFiles();
             app.Run();
         }
     }

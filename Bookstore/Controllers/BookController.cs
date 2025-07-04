@@ -7,6 +7,7 @@ using Bookstore.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
 using Swashbuckle.AspNetCore.Annotations;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Reflection.Metadata.BlobBuilder;
@@ -19,8 +20,10 @@ namespace Bookstore.Controllers
     public class BookController : ControllerBase
     {
         UnitOfwork db;
+        // private readonly IFileProvider fileProvider;
         public BookController(UnitOfwork db)
         {
+            // this.fileProvider = fileProvider;
             this.db = db;
         }
         [HttpGet]
@@ -53,9 +56,10 @@ namespace Bookstore.Controllers
         [SwaggerOperation(Summary = "Get book by book id ")]
         [SwaggerResponse(200, "return book data", typeof(BookDTO))]
         [SwaggerResponse(404, "if no book founded")]
-        public IActionResult Getbyid(int id) {
-        var book = db.bookrepository.GetById(id);
-        if(book == null) return NotFound(new { Status = 404, ErrorMassege = "No book Found" });
+        public IActionResult Getbyid(int id)
+        {
+            var book = db.bookrepository.GetById(id);
+            if (book == null) return NotFound(new { Status = 404, ErrorMassege = "No book Found" });
             var bk = new BookDTO()
             {
                 Id = book.Id,
@@ -71,12 +75,12 @@ namespace Bookstore.Controllers
         }
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        [SwaggerResponse(200, "Book created",typeof(Book))]
+        [SwaggerResponse(200, "Book created", typeof(Book))]
         [SwaggerResponse(400, "Catalog or author not found or not valid data")]
         [SwaggerOperation(
             Summary = "Create book",
             Description = "Create book on bookstore",
-            Tags = new[] {"Admin Operations"}
+            Tags = new[] { "Admin Operations" }
             )
             ]
         public IActionResult Add(AddBookDTO bk)
@@ -93,16 +97,6 @@ namespace Bookstore.Controllers
             {
                 return BadRequest(new { Status = 400, ErrorMassege = "Author not Found" });
             }
-            string? path = null;
-            if (bk.Image != null)
-            {
-                path = Path.Combine(Directory.GetCurrentDirectory(), "Files", bk.Image.FileName);
-                if (!System.IO.File.Exists(path))
-                {
-                    FileStream str = new FileStream(path, FileMode.Append);
-                    bk.Image.CopyTo(str); //upload photo to folder
-                }
-            }
             if (ModelState.IsValid)
             {
                 if (!db.bookrepository.Checkname(bk.Title))
@@ -114,7 +108,7 @@ namespace Bookstore.Controllers
                         AuthorId = bk.AuthorId,
                         CatalogId = bk.CatalogId,
                         Stock = bk.Stock,
-                        Image = path,
+                        Image = AddImage(bk.Image),
                         PublishDate = bk.PublishDate
                     };
                     db.bookrepository.Add(pd);
@@ -136,7 +130,7 @@ namespace Bookstore.Controllers
         {
             if (bk == null)
                 return BadRequest(new { Status = 400, ErrorMassege = "Empty Input" });
-            if(bk.Id != id)
+            if (bk.Id != id)
                 return BadRequest(new { Status = 400, ErrorMassege = "Not the same Id" });
             var CatalogExists = db.catalogrepository.CheckId(bk.CatalogId);
             if (!CatalogExists)
@@ -148,12 +142,6 @@ namespace Bookstore.Controllers
             {
                 return BadRequest(new { Status = 400, ErrorMassege = "Author not Found" });
             }
-            string? path = null;
-            if (bk.Image != null)
-            {
-                path = Path.Combine(Directory.GetCurrentDirectory(), "Files", bk.Image.FileName);
-
-            }
             if (ModelState.IsValid)
             {
                 var pd = new Book()
@@ -164,7 +152,7 @@ namespace Bookstore.Controllers
                     AuthorId = bk.AuthorId,
                     CatalogId = bk.CatalogId,
                     Stock = bk.Stock,
-                    Image = path,
+                    Image = AddImage(bk.Image),
                     PublishDate = bk.PublishDate
                 };
                 db.bookrepository.Edit(pd);
@@ -180,12 +168,32 @@ namespace Bookstore.Controllers
             var pd = db.bookrepository.GetById(id);
             if (pd == null)
                 return NotFound();
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Files", photo.FileName);
-            FileStream str = new FileStream(path, FileMode.Append);
-            photo.CopyTo(str); //upload photo to folder
-            pd.Image = path;
+            pd.Image = AddImage(photo);
             db.Save();
             return Ok();
+        }
+
+        private string AddImage(IFormFile? photo) {
+            if (photo!= null)
+            {
+                string folderName = "images";
+                string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName);
+
+                if (!Directory.Exists(wwwrootPath))
+                {
+                    Directory.CreateDirectory(wwwrootPath);
+                }
+                string fileName = photo.FileName;
+                string filePath = Path.Combine(wwwrootPath, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    photo.CopyTo(stream);
+                }
+                string path = Path.Combine(folderName, fileName).Replace("\\", "/");
+                return path;
+            }
+
+            return null;
         }
 
         [HttpGet("GetImage/{id}")]
@@ -194,10 +202,10 @@ namespace Bookstore.Controllers
             var bk = db.bookrepository.GetById(id);
             if (bk == null)
                 return BadRequest($"There is no Book with id: {id}");
-            var filePath = bk.Image;
-            if (System.IO.File.Exists(filePath))
+            string? filePath = null;
+            if (bk.Image != null)
             {
-                //var image = System.IO.File.ReadAllBytes(filePath);
+                filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", bk.Image.Replace("/", Path.DirectorySeparatorChar.ToString()));
                 byte[] imageBytes; // Read the file with a FileStream to avoid locking issues
                 using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
@@ -206,7 +214,11 @@ namespace Bookstore.Controllers
                 }
                 return File(imageBytes, "image/png");
             }
-            return BadRequest($"There is no Image for Book with id: {id}");
+            else
+            {
+                return BadRequest($"There is no Image for Book with id: {id}");
+            }
+            
         }
 
         [HttpDelete("{id}")]
@@ -240,7 +252,7 @@ namespace Bookstore.Controllers
                 bk.CatalogName = book.catalog.Name;
                 bk.Price = book.Price;
                 bk.Stock = book.Stock;
-                bk.image = book.Image;
+               // bk.image = book.Image;
                 bk.PublishDate = book.PublishDate;
                 booksdto.Add(bk);
             }
