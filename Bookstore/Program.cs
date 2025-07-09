@@ -95,6 +95,7 @@ namespace Bookstore
                     options.Password.RequireNonAlphanumeric = false; //not Must contain at least one special character
                     options.Password.RequireUppercase = false; // not Must contain at least one uppercase letter
                     options.Password.RequireLowercase = false;// not Must contain at least one lowercase letter)
+                 //   options.SignIn.RequireConfirmedEmail = true;
                 }).AddEntityFrameworkStores<BookstoreContext>().AddDefaultTokenProviders();
 
             builder.Services.AddAuthentication(option =>

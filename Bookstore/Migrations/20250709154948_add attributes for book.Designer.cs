@@ -4,6 +4,7 @@ using Bookstore.Contex;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookstore.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20250709154948_add attributes for book")]
+    partial class addattributesforbook
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -196,12 +199,12 @@ namespace Bookstore.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "4b801c92-1ac7-4fe0-b4bf-d52975b13fa3",
+                            Id = "65848ac4-1a28-401b-a6e2-64e8aba61c63",
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = "458ca70a-9ac2-4cad-95b7-be17c7482c54",
+                            Id = "cf200694-ca48-461d-a857-4c5b00e558ba",
                             Name = "Customer"
                         });
                 });

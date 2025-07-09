@@ -24,7 +24,7 @@ namespace Bookstore.Controllers
         [HttpGet]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "select all Catalogs ")]
-        [SwaggerResponse(200, "return all Catalogs", typeof(List<BookDTO>))]
+        [SwaggerResponse(200, "return all Catalogs", typeof(List<GetCatalogDTO>))]
         [SwaggerResponse(404, "There are no Catalogs to display")]
         public IActionResult GetAll()
         {
@@ -46,7 +46,7 @@ namespace Bookstore.Controllers
         [HttpGet("{id}")]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Get catalog by id ")]
-        [SwaggerResponse(200, "return Catalog data", typeof(BookDTO))]
+        [SwaggerResponse(200, "return Catalog data", typeof(GetCatalogDTO))]
         [SwaggerResponse(404, "no Catalog founded")]
         public IActionResult Getbyid(int id)
         {
@@ -129,7 +129,7 @@ namespace Bookstore.Controllers
         [HttpGet("Search/{Name}")]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Search for Catalogs.")]
-        [SwaggerResponse(200, "Returns a list of Catalogs.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(200, "Returns a list of Catalogs.", typeof(List<GetCatalogDTO>))]
         [SwaggerResponse(404, "No Catalogs found with This Name.")]
         public IActionResult Search(string Name)
         {

@@ -237,7 +237,7 @@ namespace Bookstore.Controllers
         [HttpGet("Search/{Name}")]
         [Authorize(Roles = "Customer,Admin")]
         [SwaggerOperation(Summary = "Search for Books.")]
-        [SwaggerResponse(200, "Returns a list of Books.", typeof(List<AuthorDTO>))]
+        [SwaggerResponse(200, "Returns a list of Books.", typeof(List<BookDTO>))]
         [SwaggerResponse(404, "No Books found with This Name.")]
         public IActionResult Search(string Name)
         {
@@ -252,13 +252,66 @@ namespace Bookstore.Controllers
                 bk.CatalogName = book.catalog.Name;
                 bk.Price = book.Price;
                 bk.Stock = book.Stock;
-               // bk.image = book.Image;
+                bk.image = book.Image;
                 bk.PublishDate = book.PublishDate;
                 booksdto.Add(bk);
             }
             if (booksdto.Count == 0)
                 return NotFound(new { Status = 404, ErrorMassege = "Books Not Found" });
             return Ok(booksdto);
+        }
+
+        [HttpPost("RateBook")]
+        public IActionResult Ratebook(int id, Rating Rate)
+        {
+            var book = db.bookrepository.GetById(id);
+            if (book == null) return NotFound(new { Status = 404, ErrorMassege = $"No book Found" });
+            book.rate = Rate;
+            db.Save();
+            return Ok();
+        }
+
+        [HttpPost("AddFavourite")]
+        public IActionResult AddFavourite(int id)
+        {
+            var book = db.bookrepository.GetById(id);
+            if (book == null) return NotFound(new { Status = 404, ErrorMassege = $"No book Found" });
+            book.Isfavourite = true;
+            db.Save();
+            return Ok();
+        }
+
+        [HttpGet("LovelyBooks")]
+        public IActionResult GetLovelyBooks() {
+            var books = db.bookrepository.LovelyBooks();
+            List<BookDTO> booksdto = new List<BookDTO>();
+            foreach (var book in books)
+            {
+                var bk = new BookDTO();
+                bk.Id = book.Id;
+                bk.Title = book.Title;
+                bk.AuthorName = book.author.FullName;
+                bk.CatalogName = book.catalog.Name;
+                bk.Price = book.Price;
+                bk.Stock = book.Stock;
+                bk.image = book.Image;
+                bk.PublishDate = book.PublishDate;
+                booksdto.Add(bk);
+            }
+            if (booksdto.Count == 0)
+                return NotFound(new { Status = 404, ErrorMassege = "No books added to favourite list" });
+            return Ok(booksdto);
+        }
+
+        [HttpPut("Remove/FavoriteBook/{id}")]
+        public IActionResult RemoveLovelyBook(int id)
+        {
+            var book = db.bookrepository.GetById(id);
+            if (book == null) return NotFound(new { Status = 404, ErrorMassege = "Book not Found" });
+            book.Isfavourite = false;
+            db.bookrepository.Edit(book);
+            db.Save();
+            return Ok();
         }
     }
 }

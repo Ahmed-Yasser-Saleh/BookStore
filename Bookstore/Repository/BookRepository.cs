@@ -23,5 +23,9 @@ namespace Bookstore.Repository
             }
             return db.Books.ToList();
         }
+
+        public List<Book> LovelyBooks() {
+            return db.Books.Where(bk => bk.Isfavourite == true).ToList();
+        }
     }
 }
