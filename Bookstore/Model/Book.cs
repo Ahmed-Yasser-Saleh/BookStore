@@ -17,7 +17,7 @@ namespace Bookstore.Model
         public string? Image { get; set; }
         public DateOnly PublishDate { get; set; }
         public Rating rate { get; set; }
-        public bool Isfavourite { get; set; }
+        public bool Isfavourite { get; set; } = false;
         public virtual Author author { get; set; }
         public virtual Catalog catalog { get; set; }
         public virtual List<OrderDetails> orderDetails { get; set; } = new List<OrderDetails>();

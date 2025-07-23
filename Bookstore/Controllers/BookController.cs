@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Swashbuckle.AspNetCore.Annotations;
+using System.IO;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Reflection.Metadata.BlobBuilder;
 
@@ -162,12 +163,12 @@ namespace Bookstore.Controllers
             else return BadRequest(ModelState);
         }
 
-        [HttpPost("addimage")]
+        [HttpPost("addimage/{id}")]
         public IActionResult addimage(int id, IFormFile photo)
         {
             var pd = db.bookrepository.GetById(id);
             if (pd == null)
-                return NotFound();
+                return NotFound(new { Status = 404, ErrorMassege = $"There is no Book with id: {id}" });
             pd.Image = AddImage(photo);
             db.Save();
             return Ok();
@@ -201,22 +202,25 @@ namespace Bookstore.Controllers
         {
             var bk = db.bookrepository.GetById(id);
             if (bk == null)
-                return BadRequest($"There is no Book with id: {id}");
+                return NotFound(new { Status = 404, ErrorMassege = $"There is no Book with id: {id}" } );
             string? filePath = null;
             if (bk.Image != null)
             {
                 filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", bk.Image.Replace("/", Path.DirectorySeparatorChar.ToString()));
                 byte[] imageBytes; // Read the file with a FileStream to avoid locking issues
-                using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+               using(var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
+
                     imageBytes = new byte[stream.Length];
-                    stream.Read(imageBytes, 0, imageBytes.Length);
+                    stream.Read(imageBytes, 0, imageBytes.Length); //fill array with content of stream as bytes
+
+                    return File(imageBytes, "image/png");
                 }
-                return File(imageBytes, "image/png");
+               
             }
             else
             {
-                return BadRequest($"There is no Image for Book with id: {id}");
+                return BadRequest(new { Status = 404, ErrorMassege = $"There is no Image for Book with id: {id}" });
             }
             
         }
@@ -261,7 +265,9 @@ namespace Bookstore.Controllers
             return Ok(booksdto);
         }
 
-        [HttpPost("RateBook")]
+
+        [HttpPut("RateBook/{id}")]
+        [Authorize(Roles = "Customer")]
         public IActionResult Ratebook(int id, Rating Rate)
         {
             var book = db.bookrepository.GetById(id);
@@ -271,7 +277,8 @@ namespace Bookstore.Controllers
             return Ok();
         }
 
-        [HttpPost("AddFavourite")]
+        [HttpPut("AddFavourite/{id}")]
+        [Authorize(Roles = "Customer")]
         public IActionResult AddFavourite(int id)
         {
             var book = db.bookrepository.GetById(id);
@@ -282,6 +289,7 @@ namespace Bookstore.Controllers
         }
 
         [HttpGet("LovelyBooks")]
+        [Authorize(Roles = "Customer")]
         public IActionResult GetLovelyBooks() {
             var books = db.bookrepository.LovelyBooks();
             List<BookDTO> booksdto = new List<BookDTO>();
@@ -304,6 +312,7 @@ namespace Bookstore.Controllers
         }
 
         [HttpPut("Remove/FavoriteBook/{id}")]
+        [Authorize(Roles = "Customer")]
         public IActionResult RemoveLovelyBook(int id)
         {
             var book = db.bookrepository.GetById(id);

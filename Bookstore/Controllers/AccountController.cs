@@ -24,7 +24,7 @@ using System.Text;
 namespace Bookstore.Controllers
 {
     [Route("api/[controller]")]
-    [ApiController]
+    //[ApiController] //to restrict app to show defaultvalidation of modelstate
    [ApiExplorerSettings(GroupName = "Account")]
     public class AccountController : ControllerBase
     {
@@ -40,11 +40,16 @@ namespace Bookstore.Controllers
         }
        
         [HttpPost("Register")]
-        public async Task<IActionResult> Register(RegisterDTO Rg)
+        public async Task<IActionResult> Register([FromBody] RegisterDTO Rg)
         {
             if (Rg == null || !ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var errors = ModelState.Values
+              .SelectMany(v => v.Errors)
+              .Select(e => e.ErrorMessage)
+              .ToList();
+
+                return BadRequest(new { Status = 400, ErrorMassege = errors });
             }
 
             if (Rg.password != Rg.Confirmpassword)
@@ -147,7 +152,7 @@ namespace Bookstore.Controllers
             }
         }
         [HttpPost("Login")]
-        public async Task<IActionResult> Login(LoginDTO cs)
+        public async Task<IActionResult> Login([FromBody] LoginDTO cs)
         {
             if (ModelState.IsValid)
             {
@@ -192,7 +197,7 @@ namespace Bookstore.Controllers
         }
         [HttpPost("ChangePassword")]
         [Authorize(Roles = "Customer,Admin")]
-        public IActionResult ChangePassword(ChangePasswordDTO passwordDTO)
+        public IActionResult ChangePassword([FromBody] ChangePasswordDTO passwordDTO)
         {
             if (ModelState.IsValid)
             {
