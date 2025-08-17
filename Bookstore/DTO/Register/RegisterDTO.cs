@@ -13,7 +13,7 @@ namespace Bookstore.DTO.Register
         public string password { get; set; }
         [Required]
         public string Confirmpassword { get; set; }
-        [RegularExpression("[a-zA-Z0-9-_]+@gmail\\.com", ErrorMessage = "Please enter a valid Gmail address.")]
+        [RegularExpression("[a-zA-Z0-9-_.]+@gmail\\.com", ErrorMessage = "Please enter a valid Gmail address.")]
         [Required]
         public string email { get; set; }
 

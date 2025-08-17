@@ -1,11 +1,12 @@
 ﻿
 using Bookstore.DTO;
 using Bookstore.DTO.Account;
+using Bookstore.DTO.Email;
 using Bookstore.DTO.Password;
 using Bookstore.DTO.Register;
+using Bookstore.Email;
 using Bookstore.Model;
 using Bookstore.Repository;
-using Bookstore.TokenManagerService;
 using Microsoft.AspNetCore.Authorization;
 
 //using Castle.Core.Smtp;
@@ -16,10 +17,14 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.IdentityModel.Tokens;
+using MimeKit;
 using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata;
 using System.Security.Claims;
 using System.Text;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
+using ResetPasswordDTO = Bookstore.DTO.Account.ResetPasswordDTO;
 
 namespace Bookstore.Controllers
 {
@@ -30,15 +35,15 @@ namespace Bookstore.Controllers
     {
         UserManager<IdentityUser> userManager;
         SignInManager<IdentityUser> signmanager;
-        //UnitOfwork db;
+        EmailService emailService;
 
-        public AccountController(UnitOfwork db, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager)
+        public AccountController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signmanager, EmailService emailService)
         {
-            //  this.db = db;
             this.userManager = userManager;
             this.signmanager = signmanager;
+            this.emailService = emailService;
         }
-       
+
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO Rg)
         {
@@ -79,17 +84,9 @@ namespace Bookstore.Controllers
                 var res = await userManager.CreateAsync(Adm, Rg.password);
                 if (res.Succeeded)
                 {
-                    //var admin = await userManager.FindByEmailAsync(Rg.email);
-                    //var confirmgeneratedtoken = await userManager.GenerateEmailConfirmationTokenAsync(admin);
-                    //if (rs.Succeeded)
-                    //{
-                    //    return Ok(new { Status = "Admin registered successfully.",
-                    //                    confirmedtoken =  $"{confirmgeneratedtoken}" });
-                    //}
-                    //else
-                    //{
-                    //    return BadRequest("AddToRole failed: " + string.Join(", ", rs.Errors.Select(e => e.Description)));
-                    //}
+                    //send active email
+                    string code = await userManager.GenerateEmailConfirmationTokenAsync(Adm);
+                    await emailService.SendEmail(Adm.Email, code, "confirm", "ActiveEmail", "Please Active your Email");
                     var rs = await userManager.AddToRoleAsync(Adm, "Admin");
                     if (rs.Succeeded)
                     {
@@ -129,12 +126,11 @@ namespace Bookstore.Controllers
                 var res = await userManager.CreateAsync(cust, Rg.password);
                 if (res.Succeeded)
                 {
-                    //var confirmgeneratedtoken = await userManager.GenerateEmailConfirmationTokenAsync(user);
-                    //var rs = await userManager.AddToRoleAsync(cust, "Customer");
-                    //if (rs.Succeeded)
-                    //{
-                    //    return Ok(new { Status = $"Customer registered successfully. please confirm your email with code: {confirmgeneratedtoken}" });
-                    //}
+                    //send active email
+                    string code = await userManager.GenerateEmailConfirmationTokenAsync(cust);
+                    await emailService.SendEmail(cust.Email, code, "confirm", "ActiveEmail", "Please Active your Email");
+                  /*  if(cust.EmailConfirmed = false)
+                        return BadRequest(new {Status = 400, Errormea})*/
                     var rs = await userManager.AddToRoleAsync(cust, "Customer");
                     if (rs.Succeeded)
                     {
@@ -159,9 +155,8 @@ namespace Bookstore.Controllers
                 var user = await userManager.FindByEmailAsync(cs.email);
                 if (user == null)
                     return Unauthorized(new { Status = 401, ErrorMassege = "Unauthorized" });
-                //var isconfirmed = await userManager.IsEmailConfirmedAsync(user);
-                //if (!isconfirmed)
-                //    return BadRequest("Email Not Confirmed");
+                if(user.EmailConfirmed == false)
+                    return BadRequest(new {Status = 404, ErrorMassege = "Email Not Confirmed" });
                 var rs = signmanager.PasswordSignInAsync(user.UserName, cs.password, false, false).Result;
                 if (rs.Succeeded)
                 {
@@ -190,7 +185,7 @@ namespace Bookstore.Controllers
                     #endregion
                 }
                 else
-                    return BadRequest(new { Status = 400, ErrorMassege = "Login Failed" });
+                    return BadRequest(new { Status = 404, ErrorMassege = "Login Failed" });
             }
             else
                 return Ok(); //BadRequest(ModelState);
@@ -204,7 +199,7 @@ namespace Bookstore.Controllers
                 var user = userManager.FindByEmailAsync(passwordDTO.email).Result;
                 if (user == null)
                 {
-                    return BadRequest(new { Status = 401, ErrorMassege = $"user not exist with email: {passwordDTO.email}" });
+                    return BadRequest(new { Status = 404, ErrorMassege = $"user not exist with email: {passwordDTO.email}" });
                 }
                 if (passwordDTO.newpassword != passwordDTO.confirmpassword)
                 {
@@ -221,48 +216,72 @@ namespace Bookstore.Controllers
             else
                 return BadRequest(ModelState);
         }
-
-        //[HttpPost("confirm-email")]
-        //public async Task<IActionResult> ConfirmEmail(string email, string Confirmedtoken)
-        //{
-            
-        //    if (string.IsNullOrEmpty(Confirmedtoken))
-        //    {
-        //        return BadRequest("Invalid token.");
-        //    }
-
-        //    var user = await userManager.FindByEmailAsync(email);
-        //    if (user == null)
-        //    {
-        //        return BadRequest($"There is no customer with email: {email}");
-        //    }
-
-        //    var isconfirmed = await userManager.ConfirmEmailAsync(user, Confirmedtoken);
-        //    if (isconfirmed.Succeeded)
-        //    {
-        //        return Ok("Email confirmed successfully!");
-        //    }
-        //    else
-        //    {
-        //        return BadRequest("Email confirmation failed");
-        //    }
-            
-        //}
-
         [HttpGet("Logout")]
         [Authorize(Roles = "Customer,Admin")]
         public IActionResult Logout()
-        {
-            // Extract the token from the Authorization header
-            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-        
-            // Add the token to the blacklist
-            TokenManager.AddToBlacklist(token);
-        
+        { 
             // Sign out the user
             signmanager.SignOutAsync();
         
             return Ok(new { Status = "Logged out successfully." });
+        }
+        [HttpGet("confirm")]
+        public async Task<IActionResult> Confirm(string email, string token)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                return BadRequest(new { Status = 404, ErrorMassege = "Invalid user." });
+            }
+
+            var result = await userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { Status = 404, ErrorMassege = $"Invalid token.{token}" });
+            }
+
+            return Ok("Your email has been confirmed successfully!");
+        }
+
+        [HttpPost("send-email-ForgotPassword")]
+        public async Task<IActionResult> SendEmailForgotpw(string email)
+        {
+            var user = userManager.FindByEmailAsync(email).Result;
+            if (user == null)
+            {
+                return BadRequest(new { Status = 404, ErrorMassege = $"user not exist with email: {email}" });
+            }
+            if(user.EmailConfirmed == false)
+            {
+                return BadRequest(new { Status = 404, ErrorMassege = "Email Not Confirmed, please confirm Email First then try reset password again"});
+            }
+            string code = await userManager.GeneratePasswordResetTokenAsync(user);
+            await emailService.SendEmailResetPassword(user.Email, code, "ResetPassword", "ForgotPassword", "Please click on button to reset Password");
+            return Ok("Email Sent Successfuly");
+        }
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO, string email, string token)
+        {
+            if (resetPasswordDTO.newpassword != resetPasswordDTO.confirmpassword)
+            {
+                return BadRequest(new { Status = 400, ErrorMessage = "Password must match Confirm Password" });
+            }
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return BadRequest(new { Status = 404, ErrorMessage = "Invalid user." });
+            }
+
+            var result = await userManager.ResetPasswordAsync(user, token, resetPasswordDTO.newpassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { Status = 400, ErrorMessage = "Invalid or expired token", Errors = result.Errors });
+            }
+
+            return Ok("Password reset successfully");
         }
     }
 }

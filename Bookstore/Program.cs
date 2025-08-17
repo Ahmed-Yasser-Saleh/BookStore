@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 using System.Reflection;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using System.IdentityModel.Tokens.Jwt;
-using Bookstore.TokenManagerService;
+using Bookstore.Email;
 
 //using Castle.Core.Smtp;
 
@@ -31,7 +31,9 @@ namespace Bookstore
             builder.Services.AddDbContext<BookstoreContext>(op => op.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("Book")));
 
             builder.Services.AddScoped<UnitOfwork>();
-           // builder.Services.AddScoped<IFormatProvider>();
+            builder.Services.AddScoped<EmailService>();
+
+            // builder.Services.AddScoped<IFormatProvider>();
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(conf =>
@@ -120,7 +122,7 @@ namespace Bookstore
                     ValidateAudience = false,
                     ValidateLifetime = true
                 };
-                op.Events = new JwtBearerEvents
+                /*op.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = context =>
                     {
@@ -135,7 +137,7 @@ namespace Bookstore
                         }
                         return Task.CompletedTask;
                     }
-                };
+                };*/
              }
             ); 
             //builder.Services.Configure<IdentityOptions>(options =>
