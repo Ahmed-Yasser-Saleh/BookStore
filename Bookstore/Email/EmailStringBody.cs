@@ -7,7 +7,7 @@
             string encodetoken = Uri.EscapeDataString(token);
 
             // Example: build a clickable link with the token and component
-            string link = $"https://localhost:44361/api/Account/{component}?email={email}&token={encodetoken}";
+            string link = $"https://bookstoreproject.runasp.net/api/Account/{component}?email={email}&token={encodetoken}";
 
             string body = $@"
             <html>
@@ -30,7 +30,7 @@
             string encodetoken = Uri.EscapeDataString(token);
 
             // link to frontend with new password then go to api reset pw with data
-            string link = $"https://localhost:44361/Reset-Password.html?email={email}&token={encodetoken}";
+            string link = $"https://bookstoreproject.runasp.net/Reset-Password.html?email={email}&token={encodetoken}";
 
             string body = $@"
             <html>

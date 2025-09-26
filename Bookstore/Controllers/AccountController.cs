@@ -254,7 +254,7 @@ namespace Bookstore.Controllers
             }
             if(user.EmailConfirmed == false)
             {
-                return BadRequest(new { Status = 404, ErrorMassege = "Email Not Confirmed, please confirm Email First then try reset password again"});
+                return BadRequest(new { Status = 404, ErrorMassege = "Email Not Confirmed, please confirm Email First then try again"});
             }
             string code = await userManager.GeneratePasswordResetTokenAsync(user);
             await emailService.SendEmailResetPassword(user.Email, code, "ResetPassword", "ForgotPassword", "Please click on button to reset Password");
@@ -262,6 +262,7 @@ namespace Bookstore.Controllers
         }
 
         [HttpPost("ResetPassword")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDTO resetPasswordDTO, string email, string token)
         {
             if (resetPasswordDTO.newpassword != resetPasswordDTO.confirmpassword)
@@ -282,6 +283,19 @@ namespace Bookstore.Controllers
             }
 
             return Ok("Password reset successfully");
+        }
+
+        [HttpDelete("Delete/{email}")]
+        [Authorize(Roles = "Customer,Admin")]
+        public async Task<IActionResult> DeleteAcc(string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if(user == null)
+                return NotFound(new { Status = 400, ErrorMessage = $"No User with id: {email}" });
+            var result = userManager.DeleteAsync(user).Result;
+            if(!result.Succeeded)
+                return BadRequest(new { Status = 400, ErrorMessage = $"{result.Errors}" });
+            return Ok();
         }
     }
 }
