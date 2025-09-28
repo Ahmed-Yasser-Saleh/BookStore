@@ -4,6 +4,7 @@ using Bookstore.Contex;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bookstore.Migrations
 {
     [DbContext(typeof(BookstoreContext))]
-    partial class BookstoreContextModelSnapshot : ModelSnapshot
+    [Migration("20250926225242_add_otp")]
+    partial class add_otp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -196,12 +199,12 @@ namespace Bookstore.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ff0de934-1fb5-4dba-bcdc-65ce191808ea",
+                            Id = "f07c3f5b-2071-4549-a7fe-96ab3f6f70e0",
                             Name = "Admin"
                         },
                         new
                         {
-                            Id = "be75126c-24a2-4b99-8ed0-06096ec79c3f",
+                            Id = "621a136a-8faa-4823-be96-d0678c0cfd39",
                             Name = "Customer"
                         });
                 });
@@ -397,9 +400,6 @@ namespace Bookstore.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("OTPExpiry")
-                        .HasColumnType("datetime2");
-
                     b.ToTable("AspNetUsers", t =>
                         {
                             t.Property("Image")
@@ -407,9 +407,6 @@ namespace Bookstore.Migrations
 
                             t.Property("OTP")
                                 .HasColumnName("Admin_OTP");
-
-                            t.Property("OTPExpiry")
-                                .HasColumnName("Admin_OTPExpiry");
                         });
 
                     b.HasDiscriminator().HasValue("Admin");
@@ -425,9 +422,6 @@ namespace Bookstore.Migrations
                     b.Property<string>("OTP")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("OTPExpiry")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("address")
                         .IsRequired()

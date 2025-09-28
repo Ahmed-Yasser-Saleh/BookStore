@@ -22,9 +22,21 @@ namespace Bookstore.Email
             await SendEmailService(result);
         }
 
+        public async Task SendEmailOTP(string email, string OTP, string component, string subject, string message)
+        {
+            var result = new EmailDto(email, "ahmedyasserr552@gmail.com", subject, EmailStringBody.SendActiveEmailWithOTP(email, OTP, component, message));
+            await SendEmailService(result);
+        }
+
         public async Task SendEmailResetPassword(string email, string code, string component, string subject, string message)
         {
             var result = new EmailDto(email, "ahmedyasserr552@gmail.com", subject, EmailStringBody.SendForgotPassword(email, code, component, message));
+            await SendEmailService(result);
+        }
+
+        public async Task SendEmailResetPasswordWithOTP(string email, string otp, string component, string subject, string message)
+        {
+            var result = new EmailDto(email, "ahmedyasserr552@gmail.com", subject, EmailStringBody.SendForgotPasswordWithOTP(email, otp, component, message));
             await SendEmailService(result);
         }
         public async Task SendEmailService(EmailDto emailDTO)

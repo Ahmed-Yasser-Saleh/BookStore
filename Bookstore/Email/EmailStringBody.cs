@@ -25,6 +25,18 @@
 
             return body;
         }
+        public static string SendActiveEmailWithOTP(string email, string OTP, string component, string message)
+        {
+            string body = $@"
+            <html>
+                <body style='font-family: Arial, sans-serif; line-height:1.6'>
+                    <h2>{message}</h2>
+                    <p style = 'color:red; font-weight:bold; font-size:large;'>{OTP}</p>
+                </body>
+            </html>";
+
+            return body;
+        }
         public static string SendForgotPassword(string email, string token, string component, string message)
         {
             string encodetoken = Uri.EscapeDataString(token);
@@ -43,6 +55,19 @@
                         </a>
                     </p>
                  
+                </body>
+            </html>";
+
+            return body;
+        }
+
+        public static string SendForgotPasswordWithOTP(string email, string OTP, string component, string message)
+        {
+            string body = $@"
+            <html>
+                <body style='font-family: Arial, sans-serif; line-height:1.6'>
+                    <h2>{message}</h2>
+                    <p style = color:red; font-weight:bold; font-size:large;>{OTP}</p>
                 </body>
             </html>";
 

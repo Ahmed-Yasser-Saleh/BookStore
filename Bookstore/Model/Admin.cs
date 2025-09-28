@@ -5,5 +5,7 @@ namespace Bookstore.Model
     public class Admin : IdentityUser
     {
         public string? Image { get; set; }
+        public string? OTP { get; set; }
+        public DateTime OTPExpiry { get; set; }
     }
 }
